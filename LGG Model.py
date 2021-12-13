@@ -8,41 +8,41 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 # COMBUSTION CHAMBER VALUES
-D_c = 100e-3 # Diameter of the Combustion Chamber
-L_c = 0.20   # Length of the Combustion Chamber
-P_c0 = 5e+6  # Initial pressure in the Combustion Chamber (before detonation)
-gamma_c = 1.4 # Gamma for the combustion products
+D_c = 100e-3    # Diameter of the Combustion Chamber
+L_c = 0.20      # Length of the Combustion Chamber
+P_c0 = 70e+6    # Initial pressure in the Combustion Chamber (before detonation)
+gamma_c = 1.4   # Gamma for the combustion products
 
 # PISTON VALUES
-D_pis = 12e-3 
-m_pis = 600e-3 # Mass of the piston
-mu_pis = 0.4   # Coefficient of friction for the piston against the pump tube
+D_pis = 12e-3   # Diameter of piston
+m_pis = 600e-3  # Mass of the piston
+mu_pis = 0.4    # Coefficient of friction for the piston against the pump tube
 
 # PUMP TUBE VALUES
-P_t0 = 300e+3  # Initial pressure in the pump tube (ahead of the piston)
-L_t0 = 0.8     # Length of the pump tube
-D_t = D_pis  # Diameter of the pump tube
+P_t0 = 300e+3   # Initial pressure in the pump tube (ahead of the piston)
+L_t0 = 0.8      # Length of the pump tube
+D_t = D_pis     # Diameter of the pump tube
 
 # RUPTURE DISK VALUES
-P_rupt = 16e+6 # Pressure at which the rupture disk ruptures
+P_rupt = 16e+6  # Pressure at which the rupture disk ruptures
 
 # BARREL VALUES
-L_b = 1   # Length of the barrel
-D_b = 5e-3 # Diameter of the barrel
-P_b0 = 0.1 # Initial upstream pressure in the barrel
-gamma_lg = 1.4 # Gamma for the light gas
+L_b = 1         # Length of the barrel
+D_b = 5e-3      # Diameter of the barrel
+P_b0 = 0.1      # Initial upstream pressure in the barrel
+gamma_lg = 1.4  # Gamma for the light gas
 
 # IMPACT CHAMBER
-gamma_ic = 1.4 # Gamma for the (near vaccum) gas in the impact chamber
+gamma_ic = 1.4  # Gamma for the (near vaccum) gas in the impact chamber
 V_ic = 1 
 
 # PROJECTILE & SABOT VALUES
-m_p = 0.01e-3
-m_s = m_p
-mu_s = 0.4
+m_p = 0.01e-3   # Projectile mass
+m_s = m_p       # Sabot Mass
+mu_s = 0.4      # Sabot Friction coeff.
 
 # SIMULATION DETAILS
-delta_t = 1e-5 # Time step length
+delta_t = 1e-5  # Time step length
 
 # Calculating areas from diameters
 A_c = np.pi * (D_c/2)**2
@@ -66,7 +66,7 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
     values so that I can test the program.
     - Euan
     """
-    P_c_array = [P_c0]
+    
     P_t_array = [P_t0]
     P_b_array = [1e-3]
     x_pis_array = [0.01]
@@ -81,16 +81,26 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
     t_array = [] # Holds the time step value
     
     # COMBUSTION CHAMBER
-    P_c_array = [70e+6] # 
+    P_c_array = [P_c0] # Combustion chamber pressure array, starts with pressure for now 
     
     # DISK RUPTURE BOOLEANS
     diskBroken = False
     diskJustBroken = True
     
-    """
-    Handles a single time step element of the piston along the pump tube.
-    """
+    
+    
+    def combustElement():
+        """ Handles the current pressure in the combustion chamber.
+            Current time drives the initial expansion and increase in pressure.
+            Position of piston drives the decrease in pressure due to expansion.
+            """
+        P_c = P_c_array[0]*np.power(x_pis_array[0]/x_pis_array[-1], gamma_c)
+        P_c_array.append(P_c)
+        
+        
     def pistonElement():
+        """ Handles a single time step element of the piston along the
+            pump tube."""
         delta_P = P_c_array[-1] - P_t_array[-1]
         F_pressure = delta_P*A_pis
         F_fric = mu_pis*0  # change later
@@ -102,8 +112,8 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
         v_pis_array.append(v_pis)
         x_pis_array.append(x_pis)
         
-        P_c = P_c_array[0]*np.power(x_pis_array[0]/x_pis_array[-1], gamma_c)
-        P_c_array.append(P_c)
+        
+       
         P_t = P_t_array[0]*np.power((L_t0 - x_pis_array[0])/(L_t0 - x_pis_array[-1]), gamma_lg)
         P_t_array.append(P_t)
         
@@ -111,13 +121,12 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
             raise ValueError("Chamber pressure after detotation was insufficient to keep piston moving forwards up to disk rupture against the pressure of the lg and the piston began moving backwards. Simulation ended.")
     
 
-    """
-    Handles a single time step element of the projectile/sabot combination
-    along the barrel.
-    When this function is run, each time step will have two entries for the
-    pump tube pressure.
-    """
+    
     def barrelElement():
+        """ Handles a single time step element of the projectile/sabot 
+            combination along the barrel.
+            When this function is run, each time step will have two entries 
+            for the pump tube pressure. """
         # Movement of Sabot/Projectile
         delta_P_p = P_t_array[-1] - P_b_array[-1]
         F_pressure = delta_P_p*A_b
@@ -157,6 +166,7 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
     while x_p_array[-1] < L_b:
         if P_t_array[-1] < P_rupt and diskBroken == False:
             # Disk unbroken, just the pump tube
+            combustElement()
             pistonElement()
             #print(P_t_array[-1])
         elif diskJustBroken == True:
@@ -186,9 +196,9 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
         P_t_average.append(0.5*(P_t_array[i]+ P_t_array[i+1]))
      """   
                 
-    return n_array, t_array, x_pis_array, x_p_array, n_disk_rupture
+    return n_array, t_array, x_pis_array, x_p_array, n_disk_rupture, P_c_array
 
-data = DoIt()
+data = DoIt() # Data format: n_array, t_array, x_pis_array, x_p_array, n_disk_rupture
 """
 fig, ax = plt.subplots(constrained_layout=True)
 ax.plot(data[4][0:-1], data[2], color = "blue")
