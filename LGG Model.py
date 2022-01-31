@@ -45,7 +45,7 @@ m_s = m_p
 mu_s = 0.4
 
 # SIMULATION DETAILS
-delta_t = 1e-5 # Time step length
+delta_t = 1e-6 # Time step length
 
 # Calculating areas from diameters
 A_c = np.pi * (D_c/2)**2
@@ -194,30 +194,40 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
      """   
      
     stop = timeit.default_timer()           # Stops Timer
-    time_to_run = stop - start    # Calculates Code Run Time
+    time_to_run = stop - start              # Calculates Code Run Time
+    
+    print(v_p_array[-1])
             
     return n_array, t_array, x_pis_array, x_p_array, n_disk_rupture, v_pis_array, v_p_array, time_to_run
 
 data = DoIt()
+
+
 """
 fig, ax = plt.subplots(constrained_layout=True)
-ax.plot(data[4][0:-1], data[2], color = "blue")
+ax.plot(data[0], data[2], color = "blue")
 ax.tick_params(axis = 'y', labelcolor = "blue")
 ax.set_xlabel("Step number")
 ax.set_ylabel("Position [m]", color = "blue")
 ax.axhline(y = L_t0, color = "black", ls = '--')
+"""
+
+"""
 ax2 = ax.twinx()
-ax2.plot(data[4][0:-1],data[3], color =  "red")
+ax2.plot(data[0],data[3], color =  "red")
 ax2.tick_params(axis = 'y', labelcolor = "red")
 ax2.set_ylabel("Acceleration [m/s^2]", color = "red")
 """
+
 """
+fig, ax3 = plt.subplots(constrained_layout=True)
 ax3 = ax2.twinx()
 ax3.plot(data[4], data[6], color = "green")
 ax3.tick_params(axis = 'y', labelcolor = "green")
 ax3.set_ylabel("Velocity", color = "green")
 plt.show()
 """
+
 """
 fig, ax = plt.subplots(constrained_layout=True)
 ax.plot(data[4], data[1], color = "blue")
@@ -231,6 +241,7 @@ ax2.set_ylabel("P_t (infront)", color = "red")
 plt.show()
 """
 
+"""
 p_pos_to_plot = []
 for i in range(0, len(data[3])):
     p_pos_to_plot.append(data[3][i] + data[2][-1])
@@ -238,7 +249,165 @@ for i in range(0, len(data[3])):
 plt.plot(data[0], data[2])
 plt.plot(data[0][data[4]:], p_pos_to_plot)
 plt.legend(["Piston position", "Projectile Position"])
+"""
 
+
+
+
+
+
+
+""" SENSITIVITY STUDY """
+
+
+
+"""
+
+res = 20
+result = np.zeros(res)
+
+
+D_pis_arr = np.linspace(1e-3,12e-3,res)
+result_1 = np.zeros(res)
+result_2 = np.zeros(res)
+result_3 = np.zeros(res)
+result_4 = np.zeros(res)
+result_5 = np.zeros(res)
+for i in range(res):
+    D_t = D_pis_arr[i]
+    A_t = np.pi * (D_t/2)**2
+    D_pis = D_pis_arr[i]
+    A_pis = np.pi * (D_pis_arr[i]/2)**2
+    result_1[i] = DoIt(A_pis=A_pis, A_t=A_t, m_pis=1e-3)[6][-1]
+    result_2[i] = DoIt(A_pis=A_pis, A_t=A_t, m_pis=10e-3)[6][-1]
+    result_3[i] = DoIt(A_pis=A_pis, A_t=A_t, m_pis=50e-3)[6][-1]
+    result_4[i] = DoIt(A_pis=A_pis, A_t=A_t, m_pis=100-3)[6][-1]
+    result_5[i] = DoIt(A_pis=A_pis, A_t=A_t, m_pis=500e-3)[6][-1]
+
+plt.figure()
+plt.plot(D_pis_arr, result_1, label='m_p = 1g')
+plt.plot(D_pis_arr, result_2, label='m_p = 10g')
+plt.plot(D_pis_arr, result_3, label='m_p = 50g')
+plt.plot(D_pis_arr, result_4, label='m_p = 100g')
+plt.plot(D_pis_arr, result_5, label='m_p = 500g')
+plt.xlabel('Piston Diameter (m)')
+plt.ylabel('Exit velocity (m/s)')
+plt.grid()
+plt.legend()
+"""
+
+  
+"""
+m_pis_arr = np.linspace(50e-3, 600e-3, res)
+for i in range(res):
+    result[i] = DoIt(m_pis=m_pis_arr[i])[6][-1]
+plt.figure()
+plt.plot(m_pis_arr, result)
+plt.xlabel('Piston Mass (kg)')
+plt.ylabel('Exit velocity (m/s)')
+"""
+
+"""  
+mu_pis_arr = np.linspace(0.1, 2, res)
+for i in range(res):
+    result[i] = DoIt(mu_pis=mu_pis_arr[i])[6][-1]
+plt.figure()
+plt.plot(mu_pis_arr, result)
+plt.xlabel('Piston Friction Coefficient')
+plt.ylabel('Exit Velocity (m/s)')
+"""
+
+"""
+P_t0_arr = np.linspace(1e+4, 1e+5, res)
+for i in range(res):
+    result[i] = DoIt(P_t0=P_t0_arr[i])[6][-1]
+plt.figure()
+plt.plot(P_t0_arr/1e+5, result)
+plt.xlabel('Initial Pressure in Pump Tube (bar)')
+plt.ylabel('Exit Velocity (m/s)')
+"""
+
+"""
+L_t0_arr = np.linspace(0.3, 0.8, res)
+for i in range(res):
+    result[i] = DoIt(L_t0=L_t0_arr[i])[6][-1]
+plt.figure()
+plt.plot(L_t0_arr, result)
+plt.xlabel('Pump Tube Length (m)')
+plt.ylabel('Exit Velocity (m/s)')
+"""
+
+"""
+P_rupt_arr = np.linspace(50e+5, 200e+5, res)
+for i in range(res):
+    result[i] = DoIt(P_rupt=P_rupt_arr[i])[6][-1]
+plt.figure()
+plt.plot(P_rupt_arr/1e+5, result)
+plt.xlabel('Rupture Pressure (bar)')
+plt.ylabel('Exit Velocity (m/s)')
+"""
+
+"""
+L_b_arr = np.linspace(1, 3, res)
+for i in range(res):
+    result[i] = DoIt(L_b=L_b_arr[i])[6][-1]
+plt.figure()
+plt.plot(L_b_arr, result)
+plt.xlabel('Barrel Length (m)')
+plt.ylabel('Exit Velocity (m/s)')
+"""
+
+"""
+D_b_arr = np.linspace(5e-3, 50e-3, res)
+for i in range(res):
+    A_b = np.pi * (D_b_arr[i]/2)**2
+    result[i] = DoIt(D_b=D_b_arr[i])[6][-1]
+plt.figure()
+plt.plot(D_b_arr, result)
+plt.xlabel('Barrel diameter (m)')
+plt.ylabel('Exit Velocity (m/s)')
+"""
+
+"""
+gamma_lg_arr = np.linspace(1.0, 1.5, res)
+for i in range(res):
+    result[i] = DoIt(gamma_lg=gamma_lg_arr[i])[6][-1]
+plt.figure()
+plt.plot(gamma_lg_arr, result)
+plt.xlabel('Light Gas Specific Heat Ratio')
+plt.ylabel('Exit Velocity (m/s)')
+"""
+
+"""
+gamma_ic_arr = np.linspace(1.0, 1.5, res)
+for i in range(res):
+    result[i] = DoIt(gamma_ic=gamma_ic_arr[i])[6][-1]
+plt.figure()
+plt.plot(gamma_ic_arr, result)
+plt.xlabel('Impact Chamber Gas Specific Heat Ratio')
+plt.ylabel('Exit Velocity (m/s)')
+"""
+
+"""
+m_p_arr = np.linspace(0.01e-3, 0.1e-3, res)
+for i in range(res):
+    result[i] = DoIt(m_p=m_p_arr[i])[6][-1]
+plt.figure()
+plt.plot(m_p_arr*1000, result)
+plt.xlabel('Projectile Mass (g)')
+plt.ylabel('Exit Velocity (m/s)')
+"""
+
+
+plt.figure()
+plt.plot(data[3], data[6])
+plt.xlabel('x position along barrel (m)')
+plt.ylabel('Projectile Velocity (m/s)')
+
+
+
+"""
+CONVERGENCE PLOTS
 
 t = np.logspace(-8, -5, 20)
 v_final = np.zeros(len(t))
@@ -259,6 +428,6 @@ ax1.set_xlabel('Time Step (s)')
 ax1.set_ylabel('Time to execute code (s)')
 ax1.semilogx(t, run_times)
 ax1.tick_params(axis='y')
-
+"""
 
     
