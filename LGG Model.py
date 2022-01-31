@@ -6,6 +6,9 @@ Created on Fri Dec  3 11:44:15 2021
 """
 import numpy as np
 from matplotlib import pyplot as plt
+import timeit
+
+
 
 # COMBUSTION CHAMBER VALUES
 D_c = 100e-3 # Diameter of the Combustion Chamber
@@ -59,6 +62,9 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
          m_p = m_p, m_s = m_s, mu_s = mu_s,\
          gamma_ic = gamma_ic, V_ic = V_ic,\
          delta_t = delta_t):
+    
+    start = timeit.default_timer()  # Start Timer
+    
     # DEFINING ARRAYS
     """
     any initial value that's in one of these arrays that is NOT a 
@@ -150,6 +156,7 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
         P_b = P_b_array[0]*np.power((V_ic + A_b*(L_b - x_p_array[0]))/(V_ic + A_b*(L_b - x_p_array[-1])), gamma_ic)
         P_b_array.append(P_b)
         
+        
     
     i = 0
     n_array.append(i)
@@ -185,8 +192,11 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
         P_t_pistonElement.append(P_t_array[i+1])
         P_t_average.append(0.5*(P_t_array[i]+ P_t_array[i+1]))
      """   
-                
-    return n_array, t_array, x_pis_array, x_p_array, n_disk_rupture
+     
+    stop = timeit.default_timer()           # Stops Timer
+    time_to_run = stop - start    # Calculates Code Run Time
+            
+    return n_array, t_array, x_pis_array, x_p_array, n_disk_rupture, v_pis_array, v_p_array, time_to_run
 
 data = DoIt()
 """
@@ -228,3 +238,27 @@ for i in range(0, len(data[3])):
 plt.plot(data[0], data[2])
 plt.plot(data[0][data[4]:], p_pos_to_plot)
 plt.legend(["Piston position", "Projectile Position"])
+
+
+t = np.logspace(-8, -5, 20)
+v_final = np.zeros(len(t))
+run_times = np.zeros(len(t))
+number_steps = np.zeros(len(t))
+for i in range(len(t)):
+    v_final[i] = DoIt(delta_t = t[i])[6][-1]
+    run_times[i] = DoIt(delta_t = t[i])[-1]
+
+fig, ax1 = plt.subplots()
+ax1.set_xlabel('Time Step (s)')
+ax1.set_ylabel('Barrel Exit Velocity (m/s)')
+ax1.semilogx(t, v_final)
+ax1.tick_params(axis='y')
+
+fig, ax1 = plt.subplots()
+ax1.set_xlabel('Time Step (s)')
+ax1.set_ylabel('Time to execute code (s)')
+ax1.semilogx(t, run_times)
+ax1.tick_params(axis='y')
+
+
+    
