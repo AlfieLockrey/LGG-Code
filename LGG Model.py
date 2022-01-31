@@ -13,7 +13,7 @@ import timeit
 # COMBUSTION CHAMBER VALUES
 D_c = 100e-3 # Diameter of the Combustion Chamber
 L_c = 0.20   # Length of the Combustion Chamber
-P_c0 = 5e+6  # Initial pressure in the Combustion Chamber (before detonation)
+P_c0 = 1e+5 # Initial pressure in the Combustion Chamber (before detonation)
 gamma_c = 1.4 # Gamma for the combustion products
 
 # PISTON VALUES
@@ -27,7 +27,7 @@ L_t0 = 0.8     # Length of the pump tube
 D_t = D_pis  # Diameter of the pump tube
 
 # RUPTURE DISK VALUES
-P_rupt = 16e+6 # Pressure at which the rupture disk ruptures
+P_rupt = 160e+5 # Pressure at which the rupture disk ruptures
 
 # BARREL VALUES
 L_b = 1   # Length of the barrel
@@ -87,7 +87,7 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
     t_array = [] # Holds the time step value
     
     # COMBUSTION CHAMBER
-    P_c_array = [70e+6] # 
+    P_c_array = [700e+5] # 
     
     # DISK RUPTURE BOOLEANS
     diskBroken = False
@@ -261,12 +261,12 @@ plt.legend(["Piston position", "Projectile Position"])
 
 
 
-"""
+
 
 res = 20
 result = np.zeros(res)
 
-
+"""
 D_pis_arr = np.linspace(1e-3,12e-3,res)
 result_1 = np.zeros(res)
 result_2 = np.zeros(res)
@@ -285,18 +285,62 @@ for i in range(res):
     result_5[i] = DoIt(A_pis=A_pis, A_t=A_t, m_pis=500e-3)[6][-1]
 
 plt.figure()
-plt.plot(D_pis_arr, result_1, label='m_p = 1g')
-plt.plot(D_pis_arr, result_2, label='m_p = 10g')
-plt.plot(D_pis_arr, result_3, label='m_p = 50g')
-plt.plot(D_pis_arr, result_4, label='m_p = 100g')
-plt.plot(D_pis_arr, result_5, label='m_p = 500g')
+plt.plot(D_pis_arr, result_1, label='m_pis = 1g')
+plt.plot(D_pis_arr, result_2, label='m_pis = 10g')
+plt.plot(D_pis_arr, result_3, label='m_pis = 50g')
+plt.plot(D_pis_arr, result_4, label='m_pis = 100g')
+plt.plot(D_pis_arr, result_5, label='m_pis = 500g')
 plt.xlabel('Piston Diameter (m)')
 plt.ylabel('Exit velocity (m/s)')
 plt.grid()
-plt.legend()
+plt.legend(bbox_to_anchor=(-0.159, 1, 1, 0), loc="lower left", ncol=3,columnspacing = 1)
+plt.show()
 """
 
-  
+
+
+D_pis_arr = np.linspace(1e-3,150e-3,res)
+result_1 = np.zeros(res)
+result_2 = np.zeros(res)
+result_3 = np.zeros(res)
+result_4 = np.zeros(res)
+result_5 = np.zeros(res)
+for i in range(res):
+    D_t = D_pis_arr[i]
+    A_t = np.pi * (D_t/2)**2
+    D_pis = D_pis_arr[i]
+    A_pis = np.pi * (D_pis_arr[i]/2)**2
+    result_1[i] = DoIt(A_pis=A_pis, A_t=A_t, m_p=0.001e-3)[6][-1]
+    result_2[i] = DoIt(A_pis=A_pis, A_t=A_t, m_p=0.01e-3)[6][-1]
+    result_3[i] = DoIt(A_pis=A_pis, A_t=A_t, m_p=0.1e-3)[6][-1]
+    result_4[i] = DoIt(A_pis=A_pis, A_t=A_t, m_p=1e-3)[6][-1]
+    result_5[i] = DoIt(A_pis=A_pis, A_t=A_t, m_p=10e-3)[6][-1]
+
+plt.figure()
+plt.plot(D_pis_arr, result_1, label='m_p = 0.001g')
+plt.plot(D_pis_arr, result_2, label='m_p = 0.01g')
+plt.plot(D_pis_arr, result_3, label='m_p = 0.1g')
+plt.plot(D_pis_arr, result_4, label='m_p = 1g')
+plt.plot(D_pis_arr, result_5, label='m_p = 10g')
+plt.plot(108e-3, 2481, 'x', color='blue',label='CAS ~ 19g')
+plt.plot(108e-3, 2260, 'x', color='blue',label='CAS ~ 100g')
+plt.plot(12.7e-3, 5700, 'x', color = 'black',label='Kent Uni H2 ~ 1g')
+plt.plot(1.42*0.0254, 11000*0.3048, 'x', color = 'red', label = 'NMIMT ~ 2.46g') #https://aip.scitation.org/doi/pdf/10.1063/1.1722882
+plt.plot(1.42*0.0254, 11070*0.3048, 'x', color = 'red', label = 'NMIMT ~ 3.51g')
+plt.plot(1.42*0.0254, 11180*0.3048, 'x', color = 'red', label = 'NMIMT ~ 4.42g')
+plt.plot(0.0508,3834, 'x',color ='green',label ='UBC ~ 5.894g') #https://open.library.ubc.ca/soa/cIRcle/collections/ubctheses/831/items/1.0098802
+plt.plot(27e-3,2040, 'x', color = 'magenta',label = 'ORNL ~ 0.055g') # https://aip.scitation.org/doi/pdf/10.1063/1.1142402
+plt.plot(27e-3,3000, 'x', color = 'magenta',label = 'ORNL ~ 0.29g')
+plt.xlabel('Piston Diameter (m)')
+plt.ylabel('Exit velocity (m/s)')
+plt.grid()
+plt.legend(bbox_to_anchor=(-0.159, 1, 1, 0), loc="lower left", ncol=3,columnspacing = 1)
+plt.show()
+
+
+
+
+
 """
 m_pis_arr = np.linspace(50e-3, 600e-3, res)
 for i in range(res):
@@ -337,15 +381,67 @@ plt.xlabel('Pump Tube Length (m)')
 plt.ylabel('Exit Velocity (m/s)')
 """
 
-"""
-P_rupt_arr = np.linspace(50e+5, 200e+5, res)
+
+P_rupt_arr = np.linspace(1e+5, 200e+5, res)
+P_rupt_results_1 = np.zeros(res)
+P_rupt_results_2 = np.zeros(res)
+P_rupt_results_3 = np.zeros(res)
+P_rupt_results_4 = np.zeros(res)
+P_rupt_results_5 = np.zeros(res)
 for i in range(res):
-    result[i] = DoIt(P_rupt=P_rupt_arr[i])[6][-1]
+    P_rupt_results_1[i] = DoIt(P_rupt=P_rupt_arr[i], m_p=0.001e-3)[6][-1]
+    P_rupt_results_2[i] = DoIt(P_rupt=P_rupt_arr[i], m_p=0.01e-3)[6][-1]
+    P_rupt_results_3[i] = DoIt(P_rupt=P_rupt_arr[i], m_p=0.1e-3)[6][-1]
+    P_rupt_results_4[i] = DoIt(P_rupt=P_rupt_arr[i], m_p=1e-3)[6][-1]
+    P_rupt_results_5[i] = DoIt(P_rupt=P_rupt_arr[i], m_p=10e-3)[6][-1]
 plt.figure()
-plt.plot(P_rupt_arr/1e+5, result)
+plt.plot(P_rupt_arr/1e+5, P_rupt_results_1, label='m_p=0.001g')
+plt.plot(P_rupt_arr/1e+5, P_rupt_results_2, label='m_p=0.01g')
+plt.plot(P_rupt_arr/1e+5, P_rupt_results_3, label='m_p=0.1g')
+plt.plot(P_rupt_arr/1e+5, P_rupt_results_4, label='m_p=1g')
+plt.plot(P_rupt_arr/1e+5, P_rupt_results_5, label='m_p=10g')
+plt.plot(7000e+3/1e+5, 5700, 'x', color = 'black',label='Kent Uni H2 ~ 1g')
+#plt.plot(4500e+3, 4300, 'x', color ='black',label='Kent Uni He ~ 1g')
+plt.plot(45e+6/1e+5, 2481, 'x', color='blue',label='CAS ~ 19g')
+plt.plot(45e+6/1e+5, 2260, 'x', color='blue',label='CAS ~ 100g')
+#plt.plot(132000*6894.76/1e+5, 11000*0.3048, 'x', color = 'red', label = 'NMIMT ~ 2.46g')
+#plt.plot(110000*6894.76/1e+5, 11070*0.3048, 'x', color = 'red', label = 'NMIMT ~ 3.51g')
+#plt.plot(103000*6894.76/1e+5, 11180*0.3048, 'x', color = 'red', label = 'NMIMT ~ 4.42g')
+plt.plot(60*6894.75729/1e+5,3834, 'x',color ='green',label ='UBC ~ 5.894g')
+plt.plot(62e+5/1e+5,2040, 'x', color = 'magenta',label = 'ORNL ~ 0.055g')
+plt.plot(100e+5/1e+5,3000, 'x', color = 'magenta',label = 'ORNL ~ 0.29g')
 plt.xlabel('Rupture Pressure (bar)')
 plt.ylabel('Exit Velocity (m/s)')
-"""
+plt.grid()
+plt.legend(bbox_to_anchor=(-0.159, 1, 1, 0), loc="lower left", ncol=3,columnspacing = 1)
+plt.show()
+
+
+P_rupt_results_2_1 = np.zeros(res)
+P_rupt_results_2_2 = np.zeros(res)
+P_rupt_results_2_3 = np.zeros(res)
+P_rupt_results_2_4 = np.zeros(res)
+P_rupt_results_2_5 = np.zeros(res)
+for i in range(res):
+    P_rupt_results_2_1[i] = DoIt(P_rupt=P_rupt_arr[i], m_pis=1e-3)[6][-1]
+    P_rupt_results_2_2[i] = DoIt(P_rupt=P_rupt_arr[i], m_pis=10e-3)[6][-1]
+    P_rupt_results_2_3[i] = DoIt(P_rupt=P_rupt_arr[i], m_pis=50e-3)[6][-1]
+    P_rupt_results_2_4[i] = DoIt(P_rupt=P_rupt_arr[i], m_pis=100e-3)[6][-1]
+    P_rupt_results_2_5[i] = DoIt(P_rupt=P_rupt_arr[i], m_pis=500e-3)[6][-1]
+plt.figure()
+plt.plot(P_rupt_arr/1e+5, P_rupt_results_2_1, label='m_pis=1g')
+plt.plot(P_rupt_arr/1e+5, P_rupt_results_2_2, label='m_pis=10g')
+plt.plot(P_rupt_arr/1e+5, P_rupt_results_2_3, label='m_pis=50g')
+plt.plot(P_rupt_arr/1e+5, P_rupt_results_2_4, label='m_pis=100g')
+plt.plot(P_rupt_arr/1e+5, P_rupt_results_2_5, label='m_pis=500g')
+plt.xlabel('Rupture Pressure (bar)')
+plt.ylabel('Exit Velocity (m/s)')
+plt.grid()
+plt.legend(bbox_to_anchor=(-0.159, 1, 1, 0), loc="lower left", ncol=3,columnspacing = 1)
+plt.show()
+
+
+
 
 """
 L_b_arr = np.linspace(1, 3, res)
