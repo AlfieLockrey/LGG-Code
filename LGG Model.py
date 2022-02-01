@@ -17,7 +17,7 @@ P_c0 = 5e+6 # Initial pressure in the Combustion Chamber (before detonation)
 gamma_c = 1.4 # Gamma for the combustion products
 
 # PISTON VALUES
-D_pis = 12e-3 
+D_pis = 12.7e-3 
 m_pis = 600e-3 # Mass of the piston
 mu_pis = 0.4   # Coefficient of friction for the piston against the pump tube
 
@@ -87,7 +87,7 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
     t_array = [] # Holds the time step value
     
     # COMBUSTION CHAMBER
-    P_c_array = [700e+5] # 
+    P_c_array = [7000e+5] # 
     
     # DISK RUPTURE BOOLEANS
     diskBroken = False
@@ -151,6 +151,7 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
         # Calculation of (changed) pressures
         P_c = P_c_array[0]*np.power(x_pis_array[0]/x_pis_array[-1], gamma_c)
         P_c_array.append(P_c)
+        
         P_t = P_t_array[0]*np.power((A_pis*(L_t0 - x_pis_array[0]))/(A_pis*(L_t0 - x_pis_array[-1]) + A_b*x_p_array[-1]), gamma_lg)
         P_t_array.append(P_t)
         P_b = P_b_array[0]*np.power((V_ic + A_b*(L_b - x_p_array[0]))/(V_ic + A_b*(L_b - x_p_array[-1])), gamma_ic)
@@ -197,7 +198,6 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
     time_to_run = stop - start              # Calculates Code Run Time
     
     print(v_p_array[-1])
-    print(L_b)
             
     return n_array, t_array, x_pis_array, x_p_array, n_disk_rupture, v_pis_array, v_p_array, time_to_run
 
@@ -267,7 +267,7 @@ plt.legend(["Piston position", "Projectile Position"])
 res = 20
 result = np.zeros(res)
 
-
+"""
 D_pis_arr = np.linspace(1e-3,150e-3,res)
 result_1 = np.zeros(res)
 result_2 = np.zeros(res)
@@ -462,22 +462,45 @@ plt.xlabel('Barrel Length (m)')
 plt.ylabel('Exit Velocity (m/s)')
 plt.ylim(0,7000)
 plt.savefig("barrel_length.png")
+"""
 
-
-
-D_b_arr = np.linspace(1e-3, 100e-3, res)
+"""
+D_b_arr = np.linspace(1e-3, 200e-3, res)
 for i in range(res):
     A_b = np.pi * (D_b_arr[i]/2)**2
-    result[i] = DoIt(D_b=D_b_arr[i])[6][-1]
+    result[i] = DoIt(D_b=D_b_arr[i],m_p=10e-3,m_s=78e-6)[6][-1]
 plt.figure()
 plt.plot(D_b_arr, result)
-plt.xlabel('Barrel diameter (m)')
+plt.xlabel('Barrel Diameter (m)')
 plt.ylabel('Exit Velocity (m/s)')
-plt.ylim(0,7000)
+
 plt.savefig("barrel_diameter.png")
 
-
-
+D_b_results_1 = np.zeros(res)
+D_b_results_2 = np.zeros(res)
+D_b_results_3 = np.zeros(res)
+D_b_results_4 = np.zeros(res)
+D_b_results_5 = np.zeros(res)
+for i in range(res):
+    #D_b_results_1[i] = DoIt(D_b = D_b_arr[i], m_p=0.01e-3)[6][-1]
+    #D_b_results_2[i] = DoIt(D_b = D_b_arr[i], m_p=0.1e-3)[6][-1]
+    D_b_results_3[i] = DoIt(D_b = D_b_arr[i], m_p=1e-3)[6][-1]
+    D_b_results_4[i] = DoIt(D_b = D_b_arr[i], m_p=10e-3)[6][-1]
+    #D_b_results_5[i] = DoIt(D_b = D_b_arr[i], m_p=100e-3)[6][-1]
+plt.figure()
+#plt.plot(D_b_arr, D_b_results_1, label='m_p=0.01g')
+#plt.plot(D_b_arr, D_b_results_2, label='m_p=0.1g')
+plt.plot(D_b_arr, D_b_results_3, label='m_p=1g')
+plt.plot(D_b_arr, D_b_results_4, label='m_p=10g')
+#plt.plot(D_b_arr, D_b_results_5, label='m_p=100g')
+plt.xlabel('Barrel Diameter (m)')
+plt.ylabel('Exit Velocity (m/s)')
+plt.grid()
+plt.legend(bbox_to_anchor=(-0.159, 1, 1, 0), loc="lower left", ncol=3,columnspacing = 1)
+plt.show()
+plt.savefig("barrel_diameter_m_p.png")
+"""
+"""
 gamma_lg_arr = np.linspace(1.0, 1.5, res)
 for i in range(res):
     result[i] = DoIt(gamma_lg=gamma_lg_arr[i])[6][-1]
@@ -511,11 +534,14 @@ plt.xlabel('Projectile Mass (g)')
 plt.ylabel('Exit Velocity (m/s)')
 plt.ylim(0,7000)
 plt.savefig("projecitle_mass.png")
+"""
 
-
-
+kent=DoIt(L_t0=0.7,m_pis=12e-3,P_t0=40e+5,D_b=4.3e-3,L_b=0.7,P_b0=0.1e-3*1e+5,m_s=78e-6,m_p=10e-3)
 plt.figure()
-plt.plot(data[3], data[6])
+plt.plot(kent[3],kent[6])
+plt.plot(kent[3][-1],4400,'x',color='red')
+plt.plot(kent[3][-1],5700,'x',color='red')
+plt.ylim(0,6000)
 plt.xlabel('x position along barrel (m)')
 plt.ylabel('Projectile Velocity (m/s)')
 
