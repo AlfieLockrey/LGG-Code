@@ -13,7 +13,7 @@ import timeit
 # COMBUSTION CHAMBER VALUES
 D_c = 100e-3 # Diameter of the Combustion Chamber
 L_c = 0.20   # Length of the Combustion Chamber
-P_c0 = 1e+5 # Initial pressure in the Combustion Chamber (before detonation)
+P_c0 = 5e+6 # Initial pressure in the Combustion Chamber (before detonation)
 gamma_c = 1.4 # Gamma for the combustion products
 
 # PISTON VALUES
@@ -27,7 +27,7 @@ L_t0 = 0.8     # Length of the pump tube
 D_t = D_pis  # Diameter of the pump tube
 
 # RUPTURE DISK VALUES
-P_rupt = 160e+5 # Pressure at which the rupture disk ruptures
+P_rupt = 16e+6 # Pressure at which the rupture disk ruptures
 
 # BARREL VALUES
 L_b = 1   # Length of the barrel
@@ -197,6 +197,7 @@ def DoIt(A_c = A_c, L_c = L_c, P_c0 = P_c0, gamma_c = gamma_c,\
     time_to_run = stop - start              # Calculates Code Run Time
     
     print(v_p_array[-1])
+    print(L_b)
             
     return n_array, t_array, x_pis_array, x_p_array, n_disk_rupture, v_pis_array, v_p_array, time_to_run
 
@@ -266,8 +267,8 @@ plt.legend(["Piston position", "Projectile Position"])
 res = 20
 result = np.zeros(res)
 
-"""
-D_pis_arr = np.linspace(1e-3,12e-3,res)
+
+D_pis_arr = np.linspace(1e-3,150e-3,res)
 result_1 = np.zeros(res)
 result_2 = np.zeros(res)
 result_3 = np.zeros(res)
@@ -295,7 +296,7 @@ plt.ylabel('Exit velocity (m/s)')
 plt.grid()
 plt.legend(bbox_to_anchor=(-0.159, 1, 1, 0), loc="lower left", ncol=3,columnspacing = 1)
 plt.show()
-"""
+
 
 
 
@@ -341,17 +342,19 @@ plt.show()
 
 
 
-"""
-m_pis_arr = np.linspace(50e-3, 600e-3, res)
+
+m_pis_arr = np.linspace(1e-3, 600e-3, res)
 for i in range(res):
     result[i] = DoIt(m_pis=m_pis_arr[i])[6][-1]
 plt.figure()
 plt.plot(m_pis_arr, result)
 plt.xlabel('Piston Mass (kg)')
 plt.ylabel('Exit velocity (m/s)')
-"""
+plt.ylim(0,7000)
+plt.savefig("piston_mass.png")
 
-"""  
+
+
 mu_pis_arr = np.linspace(0.1, 2, res)
 for i in range(res):
     result[i] = DoIt(mu_pis=mu_pis_arr[i])[6][-1]
@@ -359,9 +362,11 @@ plt.figure()
 plt.plot(mu_pis_arr, result)
 plt.xlabel('Piston Friction Coefficient')
 plt.ylabel('Exit Velocity (m/s)')
-"""
+plt.ylim(0,7000)
+plt.savefig("piston_friction_coeff.png")
 
-"""
+
+
 P_t0_arr = np.linspace(1e+4, 1e+5, res)
 for i in range(res):
     result[i] = DoIt(P_t0=P_t0_arr[i])[6][-1]
@@ -369,9 +374,11 @@ plt.figure()
 plt.plot(P_t0_arr/1e+5, result)
 plt.xlabel('Initial Pressure in Pump Tube (bar)')
 plt.ylabel('Exit Velocity (m/s)')
-"""
+plt.ylim(0,7000)
+plt.savefig("initial_pump_tube_pressure.png")
 
-"""
+
+
 L_t0_arr = np.linspace(0.3, 0.8, res)
 for i in range(res):
     result[i] = DoIt(L_t0=L_t0_arr[i])[6][-1]
@@ -379,7 +386,9 @@ plt.figure()
 plt.plot(L_t0_arr, result)
 plt.xlabel('Pump Tube Length (m)')
 plt.ylabel('Exit Velocity (m/s)')
-"""
+plt.ylim(0,7000)
+plt.savefig("pump_tube_length.png")
+
 
 
 P_rupt_arr = np.linspace(1e+5, 200e+5, res)
@@ -443,18 +452,20 @@ plt.show()
 
 
 
-"""
-L_b_arr = np.linspace(1, 3, res)
+
+L_b_arr = np.linspace(1, 5, res)
 for i in range(res):
     result[i] = DoIt(L_b=L_b_arr[i])[6][-1]
 plt.figure()
 plt.plot(L_b_arr, result)
 plt.xlabel('Barrel Length (m)')
 plt.ylabel('Exit Velocity (m/s)')
-"""
+plt.ylim(0,7000)
+plt.savefig("barrel_length.png")
 
-"""
-D_b_arr = np.linspace(5e-3, 50e-3, res)
+
+
+D_b_arr = np.linspace(1e-3, 100e-3, res)
 for i in range(res):
     A_b = np.pi * (D_b_arr[i]/2)**2
     result[i] = DoIt(D_b=D_b_arr[i])[6][-1]
@@ -462,9 +473,11 @@ plt.figure()
 plt.plot(D_b_arr, result)
 plt.xlabel('Barrel diameter (m)')
 plt.ylabel('Exit Velocity (m/s)')
-"""
+plt.ylim(0,7000)
+plt.savefig("barrel_diameter.png")
 
-"""
+
+
 gamma_lg_arr = np.linspace(1.0, 1.5, res)
 for i in range(res):
     result[i] = DoIt(gamma_lg=gamma_lg_arr[i])[6][-1]
@@ -472,9 +485,11 @@ plt.figure()
 plt.plot(gamma_lg_arr, result)
 plt.xlabel('Light Gas Specific Heat Ratio')
 plt.ylabel('Exit Velocity (m/s)')
-"""
+plt.ylim(0,7000)
+plt.savefig("light_gas_k.png")
 
-"""
+
+
 gamma_ic_arr = np.linspace(1.0, 1.5, res)
 for i in range(res):
     result[i] = DoIt(gamma_ic=gamma_ic_arr[i])[6][-1]
@@ -482,17 +497,21 @@ plt.figure()
 plt.plot(gamma_ic_arr, result)
 plt.xlabel('Impact Chamber Gas Specific Heat Ratio')
 plt.ylabel('Exit Velocity (m/s)')
-"""
+plt.ylim(0,7000)
+plt.savefig("impact_chamber_k.png")
 
-"""
-m_p_arr = np.linspace(0.01e-3, 0.1e-3, res)
+
+
+m_p_arr = np.linspace(0.001e-3, 1e-3, res)
 for i in range(res):
     result[i] = DoIt(m_p=m_p_arr[i])[6][-1]
 plt.figure()
 plt.plot(m_p_arr*1000, result)
 plt.xlabel('Projectile Mass (g)')
 plt.ylabel('Exit Velocity (m/s)')
-"""
+plt.ylim(0,7000)
+plt.savefig("projecitle_mass.png")
+
 
 
 plt.figure()
