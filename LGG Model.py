@@ -6,28 +6,40 @@ Created on Fri Dec  3 11:44:15 2021
 """
 import numpy as np
 from matplotlib import pyplot as plt
+import math
+
+
 
 # COMBUSTION CHAMBER VALUES
-D_c = 100e-3    # Diameter of the Combustion Chamber
-L_c = 0.20      # Length of the Combustion Chamber
-P0_c = 70e+6    # Initial pressure in the Combustion Chamber (before detonation)
-gamma_c = 1.4   # Gamma for the combustion products
-
+D_c = 30e-3                     # Diameter of the Combustion Chamber
+L_c = 15e-3                  # Length of the Combustion Chamber
+P0_c = 170e+6                   # Initial pressure in the Combustion Chamber (before detonation)
+gamma_c = 1.4                   # Gamma for the combustion products
+C = 12e-3                       # Charge Mass 5 to 20 g
+BR_exp = 0.81837                # BURN RATE Exponent
+u1 = 3.102e-8                   # Burning Rate Constant
+e1 = 1.27e-4                    # Propellant half web size - assumes hollow cylindrical powder
+density_propel = 1.6e3          # δ Propellant Density
+ForceConst_propel = 1.158e6     # λ Propellant Force Constant
+CoVolume_propel = 0.8e-3        # η Propellant Co-Volum
+V0_c = L_c * math.pi * (D_c/2)**2
+Z0_c = (P0_c * (V0_c - C/density_propel)) / (C * (ForceConst_propel + P0_c * (CoVolume_propel - 1 / density_propel)))
+    
 # PISTON VALUES
-D_pis = 12e-3   # Diameter of piston
-m_pis = 600e-3  # Mass of the piston
+D_pis = 30e-3   # Diameter of piston
+m_pis = 110e-3  # Mass of the piston
 mu_pis = 0.4    # Coefficient of friction for the piston against the pump tube
 
 # PUMP TUBE VALUES
 P0_pt = 300e+3   # Initial pressure in the pump tube (ahead of the piston)
-L0_pt = 0.8      # Length of the pump tube
+L0_pt = 0.6      # Length of the pump tube
 D_pt = D_pis     # Diameter of the pump tube
 
 # RUPTURE DISK VALUES
-P_rupt = 16e+6  # Pressure at which the rupture disk ruptures
+P_rupt = 65e+6  # Pressure at which the rupture disk ruptures
 
 # BARREL VALUES
-L_b = 1         # Length of the barrel
+L_b = 3         # Length of the barrel
 D_b = 5e-3      # Diameter of the barrel
 P0_b = 0.1      # Initial upstream pressure in the barrel
 gamma_lg = 1.4  # Gamma for the light gas
@@ -82,23 +94,29 @@ def DoIt(A_c = A_c, L_c = L_c, P0_c = P0_c, gamma_c = gamma_c,\
     values so that I can test the program.
     - Euan
     """
+    global n_array, t_array, x_pis_array, x_pr_array, n_disk_rupture, P_c_array, \
+            v_pis_array, v_pr_array, P_pt_array, Z_c_array
     
-    P_pt_array = [P0_pt]      # PUMP TUBE Pressure Ahead of Piston
-    P_b_array = [1e-3]      # BARREL PRESSURE Behind the projectile
-    x_pis_array = [0.01]    # PISTON DISPLACEMENT from initial position
-    x_pr_array = [0.01]      # PROJECTILE DISPLACEMENT from initial position
-    v_pis_array = [0]       # PISTON VELOCITY
-    v_pr_array = [0]         # PROJECTILE VELOCITY
-    a_pis_array = [0]       # PISTON ACCELERATION
-    a_pr_array = [0]         # PROJECTILE ACCELERATION
-    Vol_pis_array = [0]     # PISTON/COMB. VOLUME of chamber
-    Vol_p_array = [0]       # 
-    n_array = [] # Counts the time step number
-    t_array = [] # Holds the time step value
-    
+    P_pt_array = [P0_pt]        # PUMP TUBE Pressure Ahead of Piston
+    P_b_array = [1e-3]          # BARREL PRESSURE Behind the projectile
+    x_pis_array = [0.01]           # PISTON DISPLACEMENT from initial position
+    x_pr_array = [0]            # PROJECTILE DISPLACEMENT from initial position
+    v_pis_array = [0]           # PISTON VELOCITY
+    v_pr_array = [0]            # PROJECTILE VELOCITY
+    a_pis_array = [0]           # PISTON ACCELERATION
+    a_pr_array = [0]            # PROJECTILE ACCELERATION
+    Vol_c_array = [0]           # PISTON/COMB. VOLUME of chamber
+    Vol_pis_array = [0]         # PISTON/BARREL VOLUME behind projectile
+    n_array = []                # Counts the time step number
+    t_array = []                # Holds the time step value
+     
     # COMBUSTION CHAMBER
+
     P_c_array = [P0_c] # Combustion chamber pressure array, starts with pressure for now 
+    Z_c_array = [0]          # POWDER BURN Decimal - may need to start at z0
     
+    
+    R1 = u1 / e1
     # DISK RUPTURE BOOLEANS
     diskBroken = False
     diskJustBroken = True
@@ -108,8 +126,14 @@ def DoIt(A_c = A_c, L_c = L_c, P0_c = P0_c, gamma_c = gamma_c,\
     def combustElement():
         """ Handles the current pressure in the combustion chamber.
             Current time drives the initial expansion and increase in pressure.
-            Position of piston drives the decrease in pressure due to expansion.
-            """
+            Position of piston drives the decrease in pressure due to 
+            expansion. """
+        P_c_prev = P_c_array[-1]                            # Previous Combustion Chamber Pressure
+            
+        dz_dt = R1 * P_c_prev**BR_exp                       # Burn Rate gradient
+        Z_cur = Z_c_array[-1] + delta_t * dz_dt             # Current Burnt decimal
+        Z_c_array.append(Z_cur)                             # Append to Powder Burn array
+        
         P_c = P_c_array[0]*np.power(x_pis_array[0]/x_pis_array[-1], gamma_c)
         P_c_array.append(P_c)
         
@@ -132,7 +156,7 @@ def DoIt(A_c = A_c, L_c = L_c, P0_c = P0_c, gamma_c = gamma_c,\
        
         P_pt = P_pt_array[0]*np.power((L0_pt - x_pis_array[0])/(L0_pt - x_pis_array[-1]), gamma_lg)
         P_pt_array.append(P_pt)
-        
+        v_pr_array.append(0)
         
     
 
@@ -187,6 +211,7 @@ def DoIt(A_c = A_c, L_c = L_c, P0_c = P0_c, gamma_c = gamma_c,\
         elif diskJustBroken == True:
             # Disk broken - pump tube and sabot dynamics
             print("Barrel Reached at n = "+str(n_array[-1])+" (or "+str(t_array[-1])+"s)")
+            
             diskBroken = True
             diskJustBroken = False
             n_disk_rupture = n_array[-1]
@@ -210,7 +235,7 @@ def DoIt(A_c = A_c, L_c = L_c, P0_c = P0_c, gamma_c = gamma_c,\
         P_t_pistonElement.append(P_t_array[i+1])
         P_t_average.append(0.5*(P_t_array[i]+ P_t_array[i+1]))
      """   
-                
+    print('Projectile Exit Velocity = ', v_pr_array[-1])       
     return n_array, t_array, x_pis_array, x_pr_array, n_disk_rupture, P_c_array
 
 data = DoIt() # Data format: n_array, t_array, x_pis_array, x_p_array, n_disk_rupture, P_c_array
@@ -253,3 +278,49 @@ for i in range(0, len(data[3])):
 plt.plot(data[0], data[2])
 plt.plot(data[0][data[4]:], p_pos_to_plot)
 plt.legend(["Piston position", "Projectile Position"])
+
+# ------------------------ Pressure-Time Plots --------------------------------
+fig_PT = plt.figure()               # Create Figure
+fig_PT.suptitle('Pressure vs Time') # Set Figure Title
+ax_PT = fig_PT.add_subplot()        # Add axes to figure
+ax_PT.set_yscale('log')             # Use logarithmic Y scale
+    
+ax_PT.set_xlabel('Time (s)')        # Set x label
+ax_PT.set_ylabel('Pressure (Pa)')   # Set y label
+
+# Plot Pressures with time   
+ax_PT.plot(t_array, P_c_array,  label='Combustion')                        
+ax_PT.plot(t_array, P_pt_array, label='Pump Tube') 
+ax_PT.grid()                        # Apply a grid to plot area
+ax_PT.legend()                      # Enable Legends
+ax_PT.axhline(y=P_rupt, color='k')
+# ----------------------------------------------------------------------------- 
+
+# ------------------------ Velocity-Time Plots --------------------------------
+fig_vT = plt.figure()               # Create Figure
+fig_vT.suptitle('Velocity vs Time') # Set Figure Title
+ax_vT = fig_vT.add_subplot()        # Add axes to figure
+    
+ax_vT.set_xlabel('Time (s)')        # Set x label
+ax_vT.set_ylabel('Velocity (m/s)')   # Set y label
+                       # Apply a grid to plot area
+# Plot Velocities with time   
+ax_vT.plot(t_array, v_pr_array, label='Projectile')                        
+ax_vT.plot(t_array, v_pis_array, label='Piston') 
+ax_vT.grid()                        # Apply a grid to plot area
+ax_vT.legend()                      # Enable Legends
+# -----------------------------------------------------------------------------
+
+# ------------------------ Burn-Time Plots --------------------------------
+fig_BT = plt.figure()               # Create Figure
+fig_BT.suptitle('Powder Burn vs Time') # Set Figure Title
+ax_BT = fig_BT.add_subplot()        # Add axes to figure
+    
+ax_BT.set_xlabel('Time (s)')        # Set x label
+ax_BT.set_ylabel('Powder Burn (decimal %')   # Set y label
+                       # Apply a grid to plot area
+# Plot Velocities with time   
+ax_BT.plot(t_array[0:len(Z_c_array)], Z_c_array, label='Powder Burn')                        
+ax_BT.grid()                        # Apply a grid to plot area
+ax_BT.legend()                      # Enable Legends
+# -----------------------------------------------------------------------------    
