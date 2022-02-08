@@ -13,7 +13,7 @@ import math
 # COMBUSTION CHAMBER VALUES
 D_c = 0.03                      # Diameter of the Combustion Chamber
 L_c = 100e-3                    # Length of the Combustion Chamber
-P0_c = 170e+6                   # Initial pressure in the Combustion Chamber (before detonation)
+P0_c = 1e6                   # Initial pressure in the Combustion Chamber (before detonation)
 
 gamma_c = 1.2238                # Gamma for the combustion products
 C = 12e-3                       # Charge Mass 5 to 20 g
@@ -130,7 +130,7 @@ def DoIt(A_c = A_c, L_c = L_c, P0_c = P0_c, gamma_c = gamma_c,\
             Position of piston drives the decrease in pressure due to 
             expansion. """
         try:
-            test = S
+            S
         except:
             S = 0
         P_c_prev = P_c_array[-1]                            # Previous Combustion Chamber Pressure
@@ -146,9 +146,10 @@ def DoIt(A_c = A_c, L_c = L_c, P0_c = P0_c, gamma_c = gamma_c,\
             dx = x_pis_array[-2] - x_pis_array[-1]
         
         S = S + dx * P_pt
-        P_c = (ForceConst_propel * C * Z_cur - (gamma_c-1)*(m_pis / 2 * v_pis_array[-1]**2 + A_c * S))
+        P_c = (ForceConst_propel * C * Z_cur - (gamma_c-1)*(m_pis / 2 * v_pis_array[-1]**2 + A_c * S)) \
+            / (V0_c + A_c * x_pis_array[-1] - C / density_propel - (CoVolume_propel - 1 / density_propel)* C * Z_cur)
         
-        P_c = P_c_array[0]*np.power(x_pis_array[0]/x_pis_array[-1], gamma_c)
+        # P_c = P_c_array[0]*np.power(x_pis_array[0]/x_pis_array[-1], gamma_c)
         P_c_array.append(P_c)
         
         
@@ -289,13 +290,21 @@ ax2.set_ylabel("P_t (infront)", color = "red")
 plt.show()
 """
 
-p_pos_to_plot = []
-for i in range(0, len(data[3])):
-    p_pos_to_plot.append(data[3][i] + data[2][-1])
 
-plt.plot(data[0], data[2])
-plt.plot(data[0][data[4]:], p_pos_to_plot)
-plt.legend(["Piston position", "Projectile Position"])
+# ------------------------ Displacement-Time Plots --------------------------------
+fig_DT = plt.figure()               # Create Figure
+fig_DT.suptitle('Displacement vs Time') # Set Figure Title
+ax_DT = fig_DT.add_subplot()        # Add axes to figure
+    
+ax_DT.set_xlabel('Time (s)')        # Set x label
+ax_DT.set_ylabel('Displacement (m)')   # Set y label
+
+# Plot Pressures with time   
+ax_DT.plot(t_array, x_pis_array,  label='Piston')                        
+ax_DT.plot(t_array[0:len(x_pr_array)], x_pr_array, label='Projectile') 
+ax_DT.grid()                        # Apply a grid to plot area
+ax_DT.legend()                      # Enable Legends
+# -----------------------------------------------------------------------------
 
 # ------------------------ Pressure-Time Plots --------------------------------
 fig_PT = plt.figure()               # Create Figure
