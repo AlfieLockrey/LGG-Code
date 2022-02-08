@@ -11,10 +11,11 @@ import math
 
 
 # COMBUSTION CHAMBER VALUES
-D_c = 30e-3                     # Diameter of the Combustion Chamber
-L_c = 15e-3                  # Length of the Combustion Chamber
+D_c = 0.03                      # Diameter of the Combustion Chamber
+L_c = 100e-3                    # Length of the Combustion Chamber
 P0_c = 170e+6                   # Initial pressure in the Combustion Chamber (before detonation)
-gamma_c = 1.4                   # Gamma for the combustion products
+
+gamma_c = 1.2238                # Gamma for the combustion products
 C = 12e-3                       # Charge Mass 5 to 20 g
 BR_exp = 0.81837                # BURN RATE Exponent
 u1 = 3.102e-8                   # Burning Rate Constant
@@ -24,15 +25,15 @@ ForceConst_propel = 1.158e6     # λ Propellant Force Constant
 CoVolume_propel = 0.8e-3        # η Propellant Co-Volum
 V0_c = L_c * math.pi * (D_c/2)**2
 Z0_c = (P0_c * (V0_c - C/density_propel)) / (C * (ForceConst_propel + P0_c * (CoVolume_propel - 1 / density_propel)))
-    
+  
 # PISTON VALUES
-D_pis = 30e-3   # Diameter of piston
+D_pis = 0.03    # Diameter of piston
 m_pis = 110e-3  # Mass of the piston
 mu_pis = 0.4    # Coefficient of friction for the piston against the pump tube
 
 # PUMP TUBE VALUES
-P0_pt = 300e+3   # Initial pressure in the pump tube (ahead of the piston)
-L0_pt = 0.6      # Length of the pump tube
+P0_pt = 300e3   # Initial pressure in the pump tube (ahead of the piston)
+L0_pt = .5      # Length of the pump tube
 D_pt = D_pis     # Diameter of the pump tube
 
 # RUPTURE DISK VALUES
@@ -40,7 +41,7 @@ P_rupt = 65e+6  # Pressure at which the rupture disk ruptures
 
 # BARREL VALUES
 L_b = 3         # Length of the barrel
-D_b = 5e-3      # Diameter of the barrel
+D_b = 12.7e-3      # Diameter of the barrel
 P0_b = 0.1      # Initial upstream pressure in the barrel
 gamma_lg = 1.4  # Gamma for the light gas
 
@@ -116,7 +117,7 @@ def DoIt(A_c = A_c, L_c = L_c, P0_c = P0_c, gamma_c = gamma_c,\
     Z_c_array = [0]          # POWDER BURN Decimal - may need to start at z0
     
     
-    R1 = u1 / e1
+    
     # DISK RUPTURE BOOLEANS
     diskBroken = False
     diskJustBroken = True
@@ -128,11 +129,24 @@ def DoIt(A_c = A_c, L_c = L_c, P0_c = P0_c, gamma_c = gamma_c,\
             Current time drives the initial expansion and increase in pressure.
             Position of piston drives the decrease in pressure due to 
             expansion. """
+        try:
+            test = S
+        except:
+            S = 0
         P_c_prev = P_c_array[-1]                            # Previous Combustion Chamber Pressure
-            
+        R1 = u1 / e1    
         dz_dt = R1 * P_c_prev**BR_exp                       # Burn Rate gradient
         Z_cur = Z_c_array[-1] + delta_t * dz_dt             # Current Burnt decimal
         Z_c_array.append(Z_cur)                             # Append to Powder Burn array
+        
+        P_pt = P_pt_array[-1]
+        if len(x_pis_array) == 1:
+            dx = 0
+        else:
+            dx = x_pis_array[-2] - x_pis_array[-1]
+        
+        S = S + dx * P_pt
+        P_c = (ForceConst_propel * C * Z_cur - (gamma_c-1)*(m_pis / 2 * v_pis_array[-1]**2 + A_c * S))
         
         P_c = P_c_array[0]*np.power(x_pis_array[0]/x_pis_array[-1], gamma_c)
         P_c_array.append(P_c)
@@ -223,7 +237,11 @@ def DoIt(A_c = A_c, L_c = L_c, P0_c = P0_c, gamma_c = gamma_c,\
         i += 1
         n_array.append(i)
         t_array.append(i*delta_t)
-    
+        if i*delta_t > 2:
+            n_disk_rupture = 0
+            print('Rupture disk pressure was not reached')
+            break
+            
     """
     # Seperating out the pump tube pressure disk rupture
     P_t_barrelElement = []
