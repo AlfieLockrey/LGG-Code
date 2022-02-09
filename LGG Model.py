@@ -7,6 +7,7 @@ To Do:
     / Add volume/pressure relations to burnout element
     o Add proper barrel-pump-tube relations to barrel element
         o Implement friction to barrel-pump-tube
+        o Fix issue where projectile doesnt accelerate soon enough
     / Add some form of volume tracking to be able to plot volumes of the CVs
     o Add acceleration graphs
     o Fix where all the random global variables are and make it less janky
