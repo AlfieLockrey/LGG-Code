@@ -32,8 +32,8 @@ plt.rcParams['figure.dpi'] = 250
 
 # COMBUSTION CHAMBER VALUES
 D_c = 30e-3                     # Diameter of the Combustion Chamber
-L0_c = 100e-3                   # Length of the Combustion Chamber
-P0_c = 1e6                      # Initial pressure in the Combustion Chamber (before detonation)
+L0_c = 35e-3                    # Length of the Combustion Chamber
+P0_c = 100e3                    # Initial pressure in the Combustion Chamber (before detonation)
 C = 12e-3                       # Charge Mass 5 to 20 g
 
 gamma_c = 1.2238                # γ Gamma for the combustion products
@@ -55,9 +55,10 @@ mu_dynamic_pis = 0
 allowPistonRearward = False
 
 # PUMP TUBE VALUES
-P0_pt = 0.7e6       # Initial pressure in the pump tube (ahead of the piston)
-L0_pt = 0.5         # Length of the pump tube
+P0_pt = 10e6       # Initial pressure in the pump tube (ahead of the piston)
+L0_pt = 1.3         # Length of the pump tube
 D_pt = D_pis        # Diameter of the pump tube
+gamma_lg = 1.66     # Gamma for the light gas
 
 # RUPTURE DISK VALUES
 P_rupt = 65e+6  # Pressure at which the rupture disk ruptures
@@ -65,16 +66,15 @@ P_rupt = 65e+6  # Pressure at which the rupture disk ruptures
 # BARREL VALUES
 L_b = 1.9           # Length of the barrel
 D_b = 12.7e-3       # Diameter of the barrel
-P0_b = 0.1          # Initial upstream pressure in the barrel
-gamma_lg = 1.4      # Gamma for the light gas
+P0_b = 133          # Initial upstream pressure in the barrel
 
 # IMPACT CHAMBER
 gamma_ic = 1.4      # Gamma for the (near vaccum) gas in the impact chamber
 V_ic = 1
 
 # PROJECTILE & SABOT VALUES
-m_pr = 17e-3     # Projectile mass
-m_sb = 0.47e-3  # Sabot Mass
+m_pr = 17e-3    # Projectile mass
+m_sb = 0        # Sabot Mass0.47e-3
 mu_sb = 0.4     # Sabot Friction coeff.
 
 # SIMULATION DETAILS
@@ -122,7 +122,7 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
         Zr_c_array, n_burnout, t_burnout, V_c_array, V_pt_array
 
     P_pt_array = [P0_pt]        # PUMP TUBE Pressure Ahead of Piston
-    P_b_array = [1e-3]          # BARREL PRESSURE Behind the projectile
+    P_b_array = [P0_b]          # BARREL PRESSURE Behind the projectile
     x_pis_array = [0]           # PISTON DISPLACEMENT from initial position
     x_pr_array = [0]            # PROJECTILE DISPLACEMENT from initial position
     v_pis_array = [0]           # PISTON VELOCITY
@@ -135,7 +135,7 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
     t_array = []                # Holds the time step value
 
     # COMBUSTION CHAMBER
-    P_c_array = [P0_c]  # Combustion chamber pressure array, starts with pressure for now
+    P_c_array = [P0_pt]  # Combustion chamber pressure array, starts with pressure for now
     Zr_c_array = [0]
     Z0_br = P0_pt * (V0_c - C / density_propel) / (C * (ForceConst_propel + P0_pt * (CoVolume_propel - 1 / density_propel)))
     Z_c_array = [Z0_br]          # POWDER BURN Decimal - may need to start at z0
@@ -144,12 +144,13 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
     global diskBroken, diskJustBroken, burnoutTF, n_burnout, t_burnout
     diskBroken = False
     diskJustBroken = True
-    burnoutTF = False
 
     def combustElement(S):
         """ Handles the current pressure in the combustion chamber.
         Current time drives the initial expansion and increase in pressure.
         Position of piston drives the decrease in pressure due to expansion.
+        Burn starts from Z0, the amount of charge burnt to reach a pressure
+        equal the pressure in the pump tube ahead of the piston
         """
         dz_dt = R1 * P_c_array[-1]**BR_exp                  # Burn Rate
         Z_cur = Z_c_array[-1] + delta_t * dz_dt             # Current Burnt decimal %
@@ -186,7 +187,7 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
         Z_c_array.append(1)
         Zr_c_array.append(0)
         V_c_old = V_c_array[-1]
-        V_c_new = A_pis * (L0_c + x_pis_array[-1])              # Calculate the Volume of the Combustion Chamber for this time step
+        V_c_new = A_pis * (L0_c + x_pis_array[-1])  # Calculate the Volume of the Combustion Chamber for this time step
         V_c_array.append(V_c_new)
 
         P_c_old = P_c_array[-1]
@@ -227,33 +228,62 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
             v_pis_array.append(v_pis)
             x_pis_array.append(x_pis)
 
-        P_pt = P_pt_array[0] * np.power((L0_pt - x_pis_array[0]) / (L0_pt - x_pis_array[-1]), gamma_lg)
-        P_pt_array.append(P_pt)
         V_pt = (L0_pt - x_pis_array[-1]) * A_pis
         V_pt_array.append(V_pt)
+        P_pt = P_pt_array[-1] * np.power(V_pt_array[-2] / V_pt_array[-1], gamma_lg)
+        P_pt_array.append(P_pt)
 
     def barrelElement():
         """ Handles the pressure and movement of the pump-tube / barrel combo
         Does not handle the pressure of the combustion chamber pre or post
         burnout
+        ---------------- ΔP_pis -> Δx_pis -> P_bpt (P_pt) -> ΔP_pr -> Δx_pr -------------------
+        1) Calculate the delta P across the piston using the previous
+            steps pressures
+        2) Calculate the new pump tube barrel pressure
+        3) Calculate the acceleration of the projectile and the new position at
+            the end of the time step due to the new pressure differential
         """
-        # Volume of Chamber
+        # Piston Pressure differential and movement ---------------------------
+        delta_P_pis = P_c_array[-1] - P_pt_array[-1]                                # Identify the Pressure Differential across Piston
+        F_pressure = delta_P_pis * A_pis                                              # Identify the pressure force on piston
+
+        # Check if we need to consider static or dynamic friction -------------
+        if v_pis_array[-1] == 0:                                                # Static or Dynamic friction - are we stationary
+            F_fric = mu_static_pis                                              # Calculate Static Friction
+            F_res = (abs(F_pressure) - abs(F_fric)) * (F_pressure / abs(F_pressure))  # Calculate the resultant force with friction opposing it
+            if abs(F_pressure) > F_fric:                                        # Will pressure force overcome the friction force?
+                a_pis = F_res / m_pis                                             # Calculate acceleration from resultance force
+            else:
+                a_pis = 0                                                       # If pressure cant overcome static friction then acceleration is 0
+        else:
+            F_fric = mu_dynamic_pis
+            F_res = (abs(F_pressure) - abs(F_fric)) * (F_pressure / abs(F_pressure))  # Calculate the resultant force with friction opposing it
+            a_pis = F_res / m_pis                                                 # Calculate the acceleration of the piston
+
+        # Check if were at the backstop ---------------------------------------
+        if allowPistonRearward == False and x_pis_array[-1] <= 0 and a_pis < 0:
+            # Check if the piston is against the backstop and dont allow it to accelerate rearward
+            a_pis_array.append(0)                                               # Acceleration is 0
+            v_pis_array.append(0)                                               # Velocity of piston is 0
+            x_pis_array.append(x_pis_array[-1])                                 # Displacement of the piston remains the same
+        else:
+            # Resultant force is forward
+            v_pis = v_pis_array[-1] + a_pis * delta_t
+            x_pis = v_pis_array[-1] * delta_t + 0.5 * a_pis * (delta_t**2) + x_pis_array[-1]
+            a_pis_array.append(a_pis)
+            v_pis_array.append(v_pis)
+            x_pis_array.append(x_pis)
+
+        # Volume of barrel-pump-tube
         V_pt = (L0_pt - x_pis_array[-1]) * A_pis
         V_b = A_b * x_pr_array[-1]
         V_bpt = V_pt + V_b
         V_pt_array.append(V_bpt)
 
-        # Movement of Piston
-        delta_P_pis = P_c_array[-1] - P_pt_array[-1]
-        F_pressure = delta_P_pis * A_pis
-        F_fric = 0
-        F_res = F_pressure - F_fric
-        a_pis = F_res / m_pis
-        a_pis_array.append(a_pis)
-        v_pis = v_pis_array[-1] + a_pis * delta_t
-        x_pis = v_pis_array[-1] * delta_t + 0.5 * a_pis * (delta_t**2) + x_pis_array[-1]
-        v_pis_array.append(v_pis)
-        x_pis_array.append(x_pis)
+        # Pressure of barrel-pump-tube
+        P_bpt = P_pt_array[-1] * np.power(V_pt_array[-2] / V_pt_array[-1], gamma_lg)
+        P_pt_array.append(P_bpt)
 
         # Movement of Sabot/Projectile
         delta_P_pr = P_pt_array[-1] - P_b_array[-1]
@@ -267,60 +297,54 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
         v_pr_array.append(v_pr)
         x_pr_array.append(x_pr)
 
-        # Calculation of (changed) pressures
-        P_pt = P_pt_array[0] * np.power((A_pis * (L0_pt - x_pis_array[0])) / (A_pis * (L0_pt - x_pis_array[-1]) + A_b * x_pr_array[-1]), gamma_lg)
-        P_pt_array.append(P_pt)
-        P_b = P_b_array[0] * np.power((V_ic + A_b * (L_b - x_pr_array[0])) / (V_ic + A_b * (L_b - x_pr_array[-1])), gamma_ic)
-        P_b_array.append(P_b)
-
     # Running the Discrete Model ----------------------------------------------
     i = 0
     n_array.append(i)
     t_array.append(i * delta_t)
     S = 0
     while x_pr_array[-1] < L_b:
-        if P_pt_array[-1] < P_rupt and diskBroken == False:
+        if P_pt_array[-1] < P_rupt and diskBroken == False:     # Check if pressure has exceeded rupture pressure
             # Disk unbroken, just the pump tube
             if Z_c_array[-1] < 1:
-                combustElement(S)
+                combustElement(S)                               # Combustion Element
             else:
                 if n_burnout == 0:
                     setBurnoutValues()
-                burnoutElement()
-            pistonElement()
+                burnoutElement()                                # Burnout Element
+            pistonElement()                                     # Piston Element
             x_pr_array.append(0)
             v_pr_array.append(0)
             a_pr_array.append(0)
 
-        elif diskJustBroken == True:
+        elif diskJustBroken == True:                            # Disk has just been broken
             # Disk broken - pump tube and sabot dynamics
-            diskBroken = True
+            diskBroken = True                                   # Disk has just been broken
             diskJustBroken = False
-            n_disk_rupture = n_array[-1]
+            n_disk_rupture = n_array[-1]                        # Set disk rupture time values
             t_disk_rupture = t_array[-1]
 
             if Z_c_array[-1] < 1:
-                combustElement(S)
+                combustElement(S)                               # Combustion Element
             else:
                 if n_burnout == 0:
                     setBurnoutValues()
-                burnoutElement()
-            barrelElement()
+                burnoutElement()                                # Burnout Element
+            barrelElement()                                     # Barrel Element
         else:
             # Disk broken- pump tube and sabot dynamics
             if Z_c_array[-1] < 1:
-                combustElement(S)
+                combustElement(S)                               # Combust Element
             else:
                 if n_burnout == 0:
                     setBurnoutValues()
-                burnoutElement()
-            barrelElement()
+                burnoutElement()                                # Burnout Element
+            barrelElement()                                     # Barrel Element
 
         i += 1
         n_array.append(i)
         t_array.append(i * delta_t)
 
-        if i * delta_t > 2:                 # If projectile hasnt left the barrel after 2 seconds then something is wrong
+        if i * delta_t > .5:                 # If projectile hasnt left the barrel after .5 seconds then something is wrong
             n_disk_rupture = 0
             t_disk_rupture = 0
             break
@@ -331,7 +355,7 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
     print('Maximum P_c : ', round(max(P_c_array) / 1e6, 3), 'MPa')
     print('Maximum P_pt: ', round(max(P_pt_array) / 1e6, 3), 'MPa')
     print('Disk Ruptured after: {}s (n = {})'.format(t_disk_rupture, n_disk_rupture))
-    if t_burnout == 0:
+    if n_burnout == 0:
         print('Burnout did not occur, projectile exited when burn ratio was {}'.format(round(Z_c_array[-1], 4)))
     else:
         print('Burnout after: {}s (n = {})'.format(t_burnout, n_burnout))
@@ -379,7 +403,7 @@ ax_BrT.axvline(t_disk_rupture, color='grey', linestyle='--', label='Disk Rupture
 ax_BrT.axvline(t_burnout, color='red', linestyle='--', label='Burnout')
 ax_BrT.legend()                      # Enable Legends
 # -----------------------------------------------------------------------------
-"""
+
 # ---------- Propellant Burnt vs Powder Chamber Pressure ----------------------
 fig_BP = plt.figure()               # Create Figure
 fig_BP.suptitle('Powder Burnt vs Powder Chamber Pressure')  # Set Figure Title
@@ -394,7 +418,7 @@ ax_BP.grid()                        # Apply a grid to plot area
 ax_BP.legend()                      # Enable Legends
 ax_BP.axvline(Z_c_array[n_disk_rupture], color='grey', linestyle='--', label='Disk Rupture')
 # -----------------------------------------------------------------------------
-"""
+
 # ------------------------ Pressure-Time Plots --------------------------------
 fig_PT = plt.figure()               # Create Figure
 fig_PT.suptitle('Pressure vs Time')  # Set Figure Title
@@ -408,10 +432,11 @@ ax_PT.set_ylabel('Pressure (Pa)')   # Set y label
 ax_PT.plot(t_array, P_c_array, label='Combustion')
 ax_PT.plot(t_array, P_pt_array, label='Pump Tube')
 ax_PT.grid()                        # Apply a grid to plot area
-ax_PT.axhline(y=P_rupt, color='k')
+ax_PT.axhline(y=P_rupt, color='k', linestyle='--', label='Rupture Disk Pressure')
 ax_PT.axvline(t_disk_rupture, color='grey', linestyle='--', label='Disk Rupture')
 ax_PT.axvline(t_burnout, color='red', linestyle='--', label='Burnout')
-ax_PT.legend()                      # Enable Legends
+ax_PT.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
+             fancybox=True, shadow=True, ncol=3)    # Enable Legends
 # -----------------------------------------------------------------------------
 
 # ------------------------ Volume-Time Plots --------------------------------
@@ -445,9 +470,10 @@ ax_DT.plot(t_array[0:len(x_pr_array)], x_pr_array, label='Projectile')
 ax_DT.grid()                        # Apply a grid to plot area
 ax_DT.axvline(t_disk_rupture, color='grey', linestyle='--', label='Disk Rupture')
 ax_DT.axvline(t_burnout, color='red', linestyle='--', label='Burnout')
+ax_DT.axhline(L0_pt, color='blue', linestyle='--', label='Pump Tube Length')
 ax_DT.legend()                      # Enable Legends
 # -----------------------------------------------------------------------------
-"""
+
 # ------------------------ Velocity-Time Plots --------------------------------
 fig_vT = plt.figure()               # Create Figure
 fig_vT.suptitle('Velocity vs Time')  # Set Figure Title
@@ -464,4 +490,3 @@ ax_vT.axvline(t_disk_rupture, color='grey', linestyle='--', label='Disk Rupture'
 ax_vT.axvline(t_burnout, color='red', linestyle='--', label='Burnout')
 ax_vT.legend()                      # Enable Legends
 # -----------------------------------------------------------------------------
-"""
