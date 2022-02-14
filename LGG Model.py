@@ -48,7 +48,7 @@ CoVolume_propel = 0.8e-3        # η Propellant Co-Volum
 V0_c = L0_c * math.pi * (D_c / 2)**2
 
 # PISTON VALUES
-D_pis = 0.03            # Diameter of piston
+D_pis = 30e-3            # Diameter of piston
 m_pis = 110e-3          # Mass of the piston
 mu_static_pis = 0       # Coefficient of friction for the piston against the pump tube
 mu_dynamic_pis = 0
@@ -78,7 +78,7 @@ m_sb = 0        # Sabot Mass0.47e-3
 mu_sb = 0     # Sabot Friction coeff.
 
 # SIMULATION DETAILS
-delta_t = 1e-7  # Time step length
+delta_t = 1e-6  # Time step length
 
 # Calculating areas from diameters
 A_c = np.pi * (D_c / 2)**2
