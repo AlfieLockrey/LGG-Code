@@ -26,15 +26,15 @@ import numpy as np
 from matplotlib import pyplot as plt
 import math
 
-plt.rcParams['figure.figsize'] = [6.0, 4.0]
+plt.rcParams['figure.figsize'] = [6, 4]
 plt.rcParams['figure.dpi'] = 250
 
 
 # COMBUSTION CHAMBER VALUES
 D_c = 30e-3                     # Diameter of the Combustion Chamber
-L0_c = 35e-3                    # Length of the Combustion Chamber
+L0_c = 15e-3                    # Length of the Combustion Chamber
 P0_c = 100e3                    # Initial pressure in the Combustion Chamber (before detonation)
-C = 12e-3                       # Charge Mass 5 to 20 g
+C = 8e-3                       # Charge Mass 5 to 20 g
 
 gamma_c = 1.2238                # γ Gamma for the combustion products
 
@@ -43,7 +43,7 @@ u1 = 3.102e-8                   # Burning Rate Constant
 e1 = 1.27e-4                    # Propellant half web size - assumes hollow cylindrical powder
 R1 = u1 / e1                    # Experimentally determined Burn Rate Coefficient
 density_propel = 1.6e3          # δ Propellant Density
-ForceConst_propel = 1.158e6     # λ Propellant Force Constant
+ForceConst_propel = 1.159e6     # λ Propellant Force Constant
 CoVolume_propel = 0.8e-3        # η Propellant Co-Volum
 V0_c = L0_c * math.pi * (D_c / 2)**2
 
@@ -61,7 +61,7 @@ D_pt = D_pis        # Diameter of the pump tube
 gamma_lg = 1.66     # Gamma for the light gas
 
 # RUPTURE DISK VALUES
-P_rupt = 65e+6  # Pressure at which the rupture disk ruptures
+P_rupt = 35e+6  # Pressure at which the rupture disk ruptures
 
 # BARREL VALUES
 L_b = 1.9           # Length of the barrel
@@ -75,7 +75,7 @@ V_ic = 1
 # PROJECTILE & SABOT VALUES
 m_pr = 17e-3    # Projectile mass
 m_sb = 0        # Sabot Mass0.47e-3
-mu_sb = 0.4     # Sabot Friction coeff.
+mu_sb = 0     # Sabot Friction coeff.
 
 # SIMULATION DETAILS
 delta_t = 1e-7  # Time step length
@@ -288,7 +288,7 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
         # Movement of Sabot/Projectile
         delta_P_pr = P_pt_array[-1] - P_b_array[-1]
         F_pressure = delta_P_pr * A_b
-        F_fric = mu_sb * 0  # change later
+        F_fric = mu_sb
         F_res = F_pressure - F_fric
         a_pr = F_res / (m_pr + m_sb)
         a_pr_array.append(a_pr)
@@ -344,7 +344,7 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
         n_array.append(i)
         t_array.append(i * delta_t)
 
-        if i * delta_t > .5:                 # If projectile hasnt left the barrel after .5 seconds then something is wrong
+        if i * delta_t > .01:                 # If projectile hasnt left the barrel after .5 seconds then something is wrong
             n_disk_rupture = 0
             t_disk_rupture = 0
             break
@@ -423,16 +423,18 @@ ax_BP.axvline(Z_c_array[n_disk_rupture], color='grey', linestyle='--', label='Di
 fig_PT = plt.figure()               # Create Figure
 fig_PT.suptitle('Pressure vs Time')  # Set Figure Title
 ax_PT = fig_PT.add_subplot()        # Add axes to figure
-ax_PT.set_yscale('log')             # Use logarithmic Y scale
+# ax_PT.set_yscale('log')             # Use logarithmic Y scale
 
 ax_PT.set_xlabel('Time (s)')        # Set x label
-ax_PT.set_ylabel('Pressure (Pa)')   # Set y label
+ax_PT.set_ylabel('Pressure (MPa)')   # Set y label
 
 # Plot Pressures with time
-ax_PT.plot(t_array, P_c_array, label='Combustion')
-ax_PT.plot(t_array, P_pt_array, label='Pump Tube')
+P_c_MPa = [P / 1e6 for P in P_c_array]
+P_pt_MPa = [P / 1e6 for P in P_pt_array]
+ax_PT.plot(t_array, P_c_MPa, label='Combustion')
+ax_PT.plot(t_array, P_pt_MPa, label='Pump Tube')
 ax_PT.grid()                        # Apply a grid to plot area
-ax_PT.axhline(y=P_rupt, color='k', linestyle='--', label='Rupture Disk Pressure')
+ax_PT.axhline(y=P_rupt / 1e6, color='k', linestyle='--', label='Rupture Disk Pressure')
 ax_PT.axvline(t_disk_rupture, color='grey', linestyle='--', label='Disk Rupture')
 ax_PT.axvline(t_burnout, color='red', linestyle='--', label='Burnout')
 ax_PT.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
