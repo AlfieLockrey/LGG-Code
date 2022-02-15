@@ -56,8 +56,8 @@ allowPistonRearward = False
 
 # PUMP TUBE VALUES
 P0_pt = 10e6       # Initial pressure in the pump tube (ahead of the piston)
-L0_pt = 1.3         # Length of the pump tube
-D_pt = D_pis        # Diameter of the pump tube
+L0_pt = 1.3        # Length of the pump tube
+D_pt = 30e-3        # Diameter of the pump tube
 gamma_lg = 1.66     # Gamma for the light gas
 
 # RUPTURE DISK VALUES
@@ -119,7 +119,8 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
     # DEFINING ARRAYS
     global n_array, t_array, x_pis_array, x_pr_array, n_disk_rupture, P_c_array, \
         v_pis_array, v_pr_array, P_pt_array, Z_c_array, t_disk_rupture, \
-        Zr_c_array, n_burnout, t_burnout, V_c_array, V_pt_array
+        Zr_c_array, n_burnout, t_burnout, V_c_array, V_pt_array, S,\
+        a_pis_array, a_pr_array
 
     P_pt_array = [P0_pt]        # PUMP TUBE Pressure Ahead of Piston
     P_b_array = [P0_b]          # BARREL PRESSURE Behind the projectile
@@ -473,7 +474,8 @@ ax_DT.grid()                        # Apply a grid to plot area
 ax_DT.axvline(t_disk_rupture, color='grey', linestyle='--', label='Disk Rupture')
 ax_DT.axvline(t_burnout, color='red', linestyle='--', label='Burnout')
 ax_DT.axhline(L0_pt, color='blue', linestyle='--', label='Pump Tube Length')
-ax_DT.legend()                      # Enable Legends
+ax_DT.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
+             fancybox=True, shadow=True, ncol=3)    # Enable Legends
 # -----------------------------------------------------------------------------
 
 # ------------------------ Velocity-Time Plots --------------------------------
@@ -492,3 +494,21 @@ ax_vT.axvline(t_disk_rupture, color='grey', linestyle='--', label='Disk Rupture'
 ax_vT.axvline(t_burnout, color='red', linestyle='--', label='Burnout')
 ax_vT.legend()                      # Enable Legends
 # -----------------------------------------------------------------------------
+"""
+# ------------------------ Acceleration-Time Plots ----------------------------
+fig_aT = plt.figure()               # Create Figure
+fig_aT.suptitle('Acceleration vs Time')  # Set Figure Title
+ax_aT = fig_aT.add_subplot()        # Add axes to figure
+
+ax_aT.set_xlabel('Time (s)')        # Set x label
+ax_aT.set_ylabel('Acceleration (m/s^2)')   # Set y label
+# Apply a grid to plot area
+# Plot Velocities with time
+ax_aT.plot(t_array, a_pr_array, label='Projectile')
+ax_aT.plot(t_array, a_pis_array, label='Piston')
+ax_aT.grid()                        # Apply a grid to plot area
+ax_aT.axvline(t_disk_rupture, color='grey', linestyle='--', label='Disk Rupture')
+ax_aT.axvline(t_burnout, color='red', linestyle='--', label='Burnout')
+ax_aT.legend()                      # Enable Legends
+# -----------------------------------------------------------------------------
+"""
