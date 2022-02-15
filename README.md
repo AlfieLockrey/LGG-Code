@@ -1,6 +1,7 @@
 # LGG Code
 
 # Inputs for Riad 12.7mm 8g Charge Comparison
+<div>
 # COMBUSTION CHAMBER VALUES
 D_c = 30e-3                     # Diameter of the Combustion Chamber
 L0_c = 15e-3                    # Length of the Combustion Chamber
@@ -50,3 +51,5 @@ mu_sb = 0     # Sabot Friction coeff.
 
 # SIMULATION DETAILS
 delta_t = 1e-6  # Time step length
+
+</div>
