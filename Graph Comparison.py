@@ -8,7 +8,6 @@ Created on Tue Feb 15 15:40:49 2022
 import csv
 import numpy as np
 from matplotlib import pyplot as plt
-from sklearn.linear_model import LinearRegression
 from scipy.stats import linregress
 plt.rcParams['figure.figsize'] = [6, 4]
 plt.rcParams['figure.dpi'] = 250
