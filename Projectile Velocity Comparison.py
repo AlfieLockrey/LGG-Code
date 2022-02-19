@@ -13,10 +13,10 @@ plt.rcParams['figure.figsize'] = [6, 4]
 plt.rcParams['figure.dpi'] = 250
 
 M1Path = 'PR17.0g-BORE12.7mm-C8.0g.csv'
-E1Path = 'Experimental 8g17g12.7mm.csv'
+E1Path = 'Riad Model 1 8g12.7mm17g Projectile Velocity.csv'
 
 
-def ReadIn(path):
+def ReadIn(path, n=1, m=1e6):
     """ Reads in data from a 2 column csv file and returns the columns values
         as two lists """
     x_data = []
@@ -25,7 +25,7 @@ def ReadIn(path):
         reader = csv.reader(file)
         for i, line in enumerate(reader):
             x = float(line[0])
-            y = float(line[1]) / 1e6
+            y = float(line[n]) / m
             x_data.append(x)
             y_data.append(y)
     file.close()
@@ -36,8 +36,8 @@ def Compare(modelPath, expPath, dx_e=0, dy_e=0):
     """ Compares the model and experimental data. Can shift the experimental
         in both x and y as specified"""
 
-    mod_x, mod_y = ReadIn(modelPath)
-    exp_x_unaltered, exp_y_unaltered = ReadIn(expPath)
+    mod_x, mod_y = ReadIn(modelPath, n=4, m=1)
+    exp_x_unaltered, exp_y_unaltered = ReadIn(expPath, m=1)
 
     exp_x = [x + dx_e for x in exp_x_unaltered]
     exp_y = [y + dy_e for y in exp_y_unaltered]
@@ -47,9 +47,9 @@ def Compare(modelPath, expPath, dx_e=0, dy_e=0):
     labels = ['Unaltered Experimental', 'Altered Experimental', 'Model']
     linestyles = ['-', '-', '-']
     colors = ['lightgrey', 'orange', 'blue']
-    title = 'Powder Chamber Pressure vs Time: Model vs Experimental'
+    title = 'Projectile Velocity vs Time: Model vs Experimental'
     xtitle = 'Time (s)'
-    ytitle = 'Pressure (MPa)'
+    ytitle = 'Velocity (mps)'
 
     Plot(xs, ys, labels, linestyles, colors, title, xtitle, ytitle)
 
@@ -65,19 +65,19 @@ def Compare(modelPath, expPath, dx_e=0, dy_e=0):
 
     xs = [exp_x_trimmed, mod_x_aligned]
     ys = [exp_y_trimmed, mod_y_aligned]
-    labels = ['Altered Experimental', 'Model']
+    labels = ['Experimental', 'Model']
     linestyles = ['-', '-']
     colors = ['orange', 'blue']
-    title = 'Powder Chamber Pressure vs Time: Model vs Experimental'
+    title = 'Projectile Velocity vs Time: Model vs Experimental'
     xtitle = 'Time (s)'
-    ytitle = 'Pressure (MPa)'
+    ytitle = 'Piston Velocity (mps)'
 
     Plot(xs, ys, labels, linestyles, colors, title, xtitle, ytitle)
 
     slope, intercept, r_value_alt, p_value, std_err = linregress(exp_y_trimmed, mod_y_aligned)
     R2_alt = r_value_alt**2
-    print('Adusted Datasets have an R squared value of: ', R2_alt)
 
+    print('Adusted Datasets have an R squared value of: ', R2_alt)
     exp_x_unaltered_trimmed = []
     exp_y_unaltered_trimmed = []
     for x, y in zip(exp_x_unaltered, exp_y_unaltered):
@@ -96,9 +96,9 @@ def Compare(modelPath, expPath, dx_e=0, dy_e=0):
     labels = ['Altered Model vs Exp. (R2={})'.format(round(R2_alt, 3)), 'Unaltered Model vs Exp. (R2={})'.format(round(R2_unalt, 3)), 'x=y (R=1)']
     linestyles = ['-', '-', '--']
     colors = ['red', 'blue', 'k']
-    title = 'Powder Chamber Pressure vs Time: Model vs Experimental'
-    xtitle = 'Experimental Pressure (MPa)'
-    ytitle = 'Model Pressure (MPa)'
+    title = 'Projectile Velocity vs Time: Model vs Experimental'
+    xtitle = 'Experimental Piston Velocity (mps)'
+    ytitle = 'Model Piston Velocity (mps)'
 
     Plot(xs, ys, labels, linestyles, colors, title, xtitle, ytitle, 2)
 
@@ -117,8 +117,8 @@ def Plot(xs, ys, labels, linestyles, colors, title='', xtitle='', ytitle='', n_c
 
 
 def DeltaTPeak(modelPath, expPath):
-    mod_x, mod_y = ReadIn(modelPath)
-    exp_x, exp_y = ReadIn(expPath)
+    mod_x, mod_y = ReadIn(modelPath, n=3, m=1)
+    exp_x, exp_y = ReadIn(expPath, m=1)
 
     mod_max = max(mod_y)
     mod_max_index = mod_y.index(mod_max)
@@ -128,7 +128,7 @@ def DeltaTPeak(modelPath, expPath):
     return(timeshift)
 
 
-dt = DeltaTPeak(M1Path, E1Path)
+dt = -0.0019084999999999998  # DeltaTPeak(M1Path, E1Path)
 Compare(M1Path, E1Path, dx_e=-dt)
 
 

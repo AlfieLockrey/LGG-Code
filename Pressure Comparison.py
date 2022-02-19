@@ -16,7 +16,7 @@ M1Path = 'PR17.0g-BORE12.7mm-C8.0g.csv'
 E1Path = 'Experimental 8g17g12.7mm.csv'
 
 
-def ReadIn(path):
+def ReadIn(path, n=1, m=1e6):
     """ Reads in data from a 2 column csv file and returns the columns values
         as two lists """
     x_data = []
@@ -25,7 +25,7 @@ def ReadIn(path):
         reader = csv.reader(file)
         for i, line in enumerate(reader):
             x = float(line[0])
-            y = float(line[1]) / 1e6
+            y = float(line[n]) / m
             x_data.append(x)
             y_data.append(y)
     file.close()
@@ -36,8 +36,8 @@ def Compare(modelPath, expPath, dx_e=0, dy_e=0):
     """ Compares the model and experimental data. Can shift the experimental
         in both x and y as specified"""
 
-    mod_x, mod_y = ReadIn(modelPath)
-    exp_x_unaltered, exp_y_unaltered = ReadIn(expPath)
+    mod_x, mod_y = ReadIn(modelPath, n=1, m=1e6)
+    exp_x_unaltered, exp_y_unaltered = ReadIn(expPath, n=1, m=1e6)
 
     exp_x = [x + dx_e for x in exp_x_unaltered]
     exp_y = [y + dy_e for y in exp_y_unaltered]
