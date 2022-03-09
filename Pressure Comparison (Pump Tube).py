@@ -100,17 +100,31 @@ def Compare(modelPath, expPath, dx_e=0, dy_e=0):
     xtitle = 'Experimental Pressure (MPa)'
     ytitle = 'Model Pressure (MPa)'
 
-    Plot(xs, ys, labels, linestyles, colors, title, xtitle, ytitle, 2)
+    Plot(xs, ys, labels, linestyles, colors, title, xtitle, ytitle, 2, True)
+
+    meansquared_sum = 0
+    meanvalue_sum = 0
+    for exp, mod in zip(exp_y_trimmed, mod_y_aligned):
+        squared_diff = (exp - mod)**2
+        meansquared_sum += squared_diff
+        meanvalue_sum += exp + mod
+    meansquared = meansquared_sum / len(exp_y_trimmed)
+    print('Mean Squared Difference = ', meansquared)
+    meanvalue = meanvalue_sum / (2 * len(exp_y_unaltered_trimmed))
+    print('Mean value = ', meanvalue)
 
 
-def Plot(xs, ys, labels, linestyles, colors, title='', xtitle='', ytitle='', n_col=4):
+def Plot(xs, ys, labels, linestyles, colors, title='', xtitle='', ytitle='', n_col=4, scatter=False):
     fig, ax = plt.subplots()
     fig.suptitle(title)
     ax.set_xlabel(xtitle)
     ax.set_ylabel(ytitle)
 
     for n in range(0, len(xs)):
-        ax.plot(xs[n], ys[n], label=labels[n], linestyle=linestyles[n], color=colors[n])
+        if n != len(xs) - 1 and scatter == True:
+            ax.scatter(xs[n], ys[n], label=labels[n], linestyle=linestyles[n], color=colors[n], s=4)
+        else:
+            ax.plot(xs[n], ys[n], label=labels[n], linestyle=linestyles[n], color=colors[n])
     ax.grid()
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), fancybox=True,
               shadow=True, ncol=n_col)

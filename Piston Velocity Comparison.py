@@ -42,6 +42,17 @@ def Compare(modelPath, expPath, dx_e=0, dy_e=0):
     exp_x = [x + dx_e for x in exp_x_unaltered]
     exp_y = [y + dy_e for y in exp_y_unaltered]
 
+    xs = [exp_x_unaltered, exp_x, mod_x, ]
+    ys = [exp_y_unaltered, exp_y, mod_y]
+    labels = ['Unaltered Experimental', 'Altered Experimental', 'Model']
+    linestyles = ['-', '-', '-']
+    colors = ['lightgrey', 'orange', 'blue']
+    title = 'Piston Velocity vs Time: Model vs Experimental'
+    xtitle = 'Time (s)'
+    ytitle = 'Velocity (mps)'
+
+    Plot(xs, ys, labels, linestyles, colors, title, xtitle, ytitle)
+
     exp_x_trimmed = []
     exp_y_trimmed = []
     for x, y in zip(exp_x, exp_y):
@@ -85,17 +96,31 @@ def Compare(modelPath, expPath, dx_e=0, dy_e=0):
     xtitle = 'Experimental Piston Velocity (mps)'
     ytitle = 'Model Piston Velocity (mps)'
 
-    Plot(xs, ys, labels, linestyles, colors, title, xtitle, ytitle, 2)
+    Plot(xs, ys, labels, linestyles, colors, title, xtitle, ytitle, 2, True)
+
+    meansquared_sum = 0
+    meanvalue_sum = 0
+    for exp, mod in zip(exp_y_unaltered_trimmed, mod_y_aligned2):
+        squared_diff = (exp - mod)**2
+        meansquared_sum += squared_diff
+        meanvalue_sum += exp + mod
+    meansquared = meansquared_sum / len(exp_y_unaltered_trimmed)
+    meanvalue = meanvalue_sum / (2 * len(exp_y_unaltered_trimmed))
+    print('Mean Squared Difference = ', meansquared)
+    print('Mean value = ', meanvalue)
 
 
-def Plot(xs, ys, labels, linestyles, colors, title='', xtitle='', ytitle='', n_col=4):
+def Plot(xs, ys, labels, linestyles, colors, title='', xtitle='', ytitle='', n_col=4, scatter=False):
     fig, ax = plt.subplots()
     fig.suptitle(title)
     ax.set_xlabel(xtitle)
     ax.set_ylabel(ytitle)
 
     for n in range(0, len(xs)):
-        ax.plot(xs[n], ys[n], label=labels[n], linestyle=linestyles[n], color=colors[n])
+        if n != len(xs) - 1 and scatter == True:
+            ax.scatter(xs[n], ys[n], label=labels[n], linestyle=linestyles[n], color=colors[n], s=4)
+        else:
+            ax.plot(xs[n], ys[n], label=labels[n], linestyle=linestyles[n], color=colors[n])
     ax.grid()
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), fancybox=True,
               shadow=True, ncol=n_col)
