@@ -1,4 +1,15 @@
 # -*- coding: utf-8 -*-
+import numpy as np
+import math
+import csv
+from matplotlib import pyplot as plt
+"""
+Created on Tue Feb 15 12:29:57 2022
+
+@author: alfie
+"""
+
+# -*- coding: utf-8 -*-
 """
 Created on Fri Dec  3 11:44:15 2021
 
@@ -22,9 +33,6 @@ x = done
 
 @author: Group 47
 """
-import numpy as np
-from matplotlib import pyplot as plt
-import math
 
 plt.rcParams['figure.figsize'] = [6, 4]
 plt.rcParams['figure.dpi'] = 250
@@ -32,13 +40,13 @@ plt.rcParams['figure.dpi'] = 250
 
 # COMBUSTION CHAMBER VALUES
 D_c = 30e-3                     # Diameter of the Combustion Chamber
-L0_c = 15e-3                    # Length of the Combustion Chamber
+L0_c = 25e-3                    # Length of the Combustion Chamber
 P0_c = 100e3                    # Initial pressure in the Combustion Chamber (before detonation)
 C = 8e-3                       # Charge Mass 5 to 20 g
 
 gamma_c = 1.2238                # γ Gamma for the combustion products
 
-BR_exp = 0.81837                # BURN RATE Exponent
+BR_exp = 0.845                # BURN RATE Exponent 0.81837 or 0.845
 u1 = 3.102e-8                   # Burning Rate Constant
 e1 = 1.27e-4                    # Propellant half web size - assumes hollow cylindrical powder
 R1 = u1 / e1                    # Experimentally determined Burn Rate Coefficient
@@ -78,7 +86,7 @@ m_sb = 0        # Sabot Mass0.47e-3
 mu_sb = 0     # Sabot Friction coeff.
 
 # SIMULATION DETAILS
-delta_t = 1e-6  # Time step length
+delta_t = 1e-7  # Time step length
 
 # Calculating areas from diameters
 A_c = np.pi * (D_c / 2)**2
@@ -512,3 +520,8 @@ ax_aT.axvline(t_burnout, color='red', linestyle='--', label='Burnout')
 ax_aT.legend()                      # Enable Legends
 # -----------------------------------------------------------------------------
 """
+
+# with open('PR{}g-BORE{}mm-C{}g.csv'.format(m_pr * 1000, D_b * 1000, C * 1000), 'w', newline='') as myfile:
+#    wr = csv.writer(myfile)
+#    for t, P_c, P_pt, v_pis, v_pr in zip(t_array, P_c_array, P_pt_array, v_pis_array, v_pr_array):
+#        wr.writerow([t, P_c, P_pt, v_pis, v_pr])
