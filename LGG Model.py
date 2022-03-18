@@ -30,11 +30,15 @@ plt.rcParams['figure.figsize'] = [6, 4]
 plt.rcParams['figure.dpi'] = 250
 
 
+def PrintImportant(D_c, L0_c, C, D_pis, m_pis, P0_pt, L0_pt, gamma_lg, ):
+    print()
+
+
 # COMBUSTION CHAMBER VALUES
 D_c = 25e-3                     # Diameter of the Combustion Chamber
 L0_c = 150e-3                    # Length of the Combustion Chamber
 P0_c = 100e3                    # Initial pressure in the Combustion Chamber (before detonation)
-C = 25e-3                       # Charge Mass 5 to 20 g
+C = 20e-3                       # Charge Mass 5 to 20 g
 
 gamma_c = 1.2238                # γ Gamma for the combustion products
 
@@ -48,8 +52,8 @@ CoVolume_propel = 0.8e-3        # η Propellant Co-Volum
 V0_c = L0_c * math.pi * (D_c / 2)**2
 
 # PISTON VALUES
-D_pis = 25e-3            # Diameter of piston
-m_pis = 110e-3          # Mass of the piston
+D_pis = 40e-3            # Diameter of piston
+m_pis = 145e-3          # Mass of the piston
 mu_static_pis = 0       # Coefficient of friction for the piston against the pump tube
 mu_dynamic_pis = 0
 allowPistonRearward = False
@@ -58,7 +62,7 @@ allowPistonRearward = False
 P0_pt = 30e6       # Initial pressure in the pump tube (ahead of the piston)
 L0_pt = 1.5        # Length of the pump tube
 D_pt = D_pis        # Diameter of the pump tube
-gamma_lg = 1.66     # Gamma for the light gas
+gamma_lg = 1.667     # Gamma for the light gas
 
 # RUPTURE DISK VALUES
 P_rupt = 150e+6  # Pressure at which the rupture disk ruptures
@@ -513,3 +517,27 @@ ax_aT.axvline(t_burnout, color='red', linestyle='--', label='Burnout')
 ax_aT.legend()                      # Enable Legends
 # -----------------------------------------------------------------------------
 """
+
+# ------------------------ Pressure-Displacement Plots --------------------------------
+fig_PD = plt.figure()               # Create Figure
+fig_PD.suptitle('Pressure vs Relative Displacement')  # Set Figure Title
+ax_PD = fig_PD.add_subplot()        # Add axes to figure
+# ax_PT.set_yscale('log')             # Use logarithmic Y scale
+
+ax_PD.set_xlabel('Displacement (m)')        # Set x label
+ax_PD.set_ylabel('Pressure (MPa)')   # Set y label
+
+# Plot Pressures with time
+P_c_MPa = [P / 1e6 for P in P_c_array]
+P_pt_MPa = [P / 1e6 for P in P_pt_array]
+ax_PD.plot(x_pis_array, P_c_MPa, label='Behind Piston')
+ax_PD.plot(x_pis_array, P_pt_MPa, label='Ahead Piston')
+ax_PD.plot(x_pr_array, P_pt_MPa, label='Behind Projectile', linestyle='--')
+ax_PD.grid()                        # Apply a grid to plot area
+ax_PD.set_xlim(0, L0_pt)
+ax_PD.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
+             fancybox=True, shadow=True, ncol=3)    # Enable Legends
+# -----------------------------------------------------------------------------
+ax_PD.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
+             fancybox=True, shadow=True, ncol=3)    # Enable Legends
+# -----------------------------------------------------------------------------
