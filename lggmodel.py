@@ -370,7 +370,7 @@ def DoIt(D_c=D_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, D_pis=D_pis,
             print('Burnout did not occur, projectile exited when burn ratio was {}'.format(round(Z_c_array[-1], 4)))
         else:
             print('Burnout after: {}s (n = {})'.format(t_burnout, n_burnout))
-    return v_pr_array[-1]
+    return v_pr_array[-1], max(P_pt_array), max(v_pis_array), max(P_c_array), max(x_pis_array)
 
 
 #data = DoIt(printing = True)  # Data format: n_array, t_array, x_pis_array, x_p_array, n_disk_rupture, P_c_array
