@@ -56,14 +56,14 @@ CoVolume_propel = 0.8e-3        # η Propellant Co-Volum
 V0_c = L0_c * math.pi * (D_c / 2)**2
 
 # PISTON VALUES
-D_pis = 60e-3            # Diameter of piston
+D_pis = 40e-3            # Diameter of piston
 m_pis = 145e-3         # Mass of the piston
 mu_static_pis = 0       # Coefficient of friction for the piston against the pump tube
 mu_dynamic_pis = 0
 allowPistonRearward = False
 
 # PUMP TUBE VALUES
-P0_pt = 60e6       # Initial pressure in the pump tube (ahead of the piston)
+P0_pt = 45e6       # Initial pressure in the pump tube (ahead of the piston)
 L0_pt = 1.5        # Length of the pump tube
 D_pt = D_pis        # Diameter of the pump tube
 gamma_lg = 1.667     # Gamma for the light gas
@@ -180,7 +180,8 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, C=C, A_pis=A_pis,
 
         S = S + dx * P_pt_array[-1]                         # Work done on piston (energy removed from gas)
         # Combustion Pressure using energy balance between internal, work done and PV
-        P_c = (ForceConst_propel * C * Z_cur - (gamma_c - 1) * (m_pis / 2 * v_pis_array[-1]**2 + A_c * S)) \
+        m_prime = m_pis + C / 3
+        P_c = (ForceConst_propel * C * Z_cur - (gamma_c - 1) * (m_prime / 2 * v_pis_array[-1]**2 + A_c * S)) \
             / (V0_c + A_c * x_pis_array[-1] - C / density_propel - (CoVolume_propel - 1 / density_propel) * C * Z_cur)
 
         P_c_array.append(P_c)                               # Append the Combustion Pressure

@@ -119,7 +119,7 @@ n_burnout = 0
 # x = displacement
 
 
-def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
+def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, C=C, A_pis=A_pis,
          mu_static_pis=mu_static_pis, mu_dynamic_pis=mu_dynamic_pis,
          P0_pt=P0_pt, L0_pt=L0_pt, A_pt=A_pt, P_rupt=P_rupt, L_b=L_b,
          D_b=D_b, P0_b=P0_b, gamma_lg=gamma_lg, m_pr=m_pr, m_sb=m_sb,
@@ -128,7 +128,9 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
     global n_array, t_array, x_pis_array, x_pr_array, n_disk_rupture, P_c_array, \
         v_pis_array, v_pr_array, P_pt_array, Z_c_array, t_disk_rupture, \
         Zr_c_array, n_burnout, t_burnout, V_c_array, V_pt_array, S,\
-        a_pis_array, a_pr_array
+        a_pis_array, a_pr_array, T_lg_array, T_lg2_array, t2_array, P_c2_array,\
+        P_pt2_array, x_pis2_array, m_lg_array, v_pis2_array, mr_lg_array, t_pr_exit, \
+        n_pr_exit, T_c_array, T_c2_array, R_c_array, m_c_array, m_c_cProds_array, V_c2_array
 
     P_pt_array = [P0_pt]        # PUMP TUBE Pressure Ahead of Piston
     P_b_array = [P0_b]          # BARREL PRESSURE Behind the projectile
@@ -143,6 +145,7 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
     n_array = []                # Counts the time step number
     t_array = []                # Holds the time step value
 
+    mr_lg_array = [0]
     # COMBUSTION CHAMBER
     P_c_array = [P0_pt]  # Combustion chamber pressure array, starts with pressure for now
     Zr_c_array = [0]
@@ -173,7 +176,8 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
 
         S = S + dx * P_pt_array[-1]                         # Work done on piston (energy removed from gas)
         # Combustion Pressure using energy balance between internal, work done and PV
-        P_c = (ForceConst_propel * C * Z_cur - (gamma_c - 1) * (m_pis / 2 * v_pis_array[-1]**2 + A_c * S)) \
+        m_prime = m_pis + C / 3
+        P_c = (ForceConst_propel * C * Z_cur - (gamma_c - 1) * (m_prime / 2 * v_pis_array[-1]**2 + A_c * S)) \
             / (V0_c + A_c * x_pis_array[-1] - C / density_propel - (CoVolume_propel - 1 / density_propel) * C * Z_cur)
 
         P_c_array.append(P_c)                               # Append the Combustion Pressure
@@ -200,7 +204,7 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
         V_c_array.append(V_c_new)
 
         P_c_old = P_c_array[-1]
-        P_c_new = P_c_old * V_c_old / V_c_new
+        P_c_new = P_c_old * (V_c_new / V_c_old)**(-gamma_c)
         P_c_array.append(P_c_new)
 
     def pistonElement():
@@ -308,10 +312,13 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
 
     # Running the Discrete Model ----------------------------------------------
     i = 0
-    n_array.append(i)
-    t_array.append(i * delta_t)
+    n_array.append(0)
+    t_array.append(0)
     S = 0
     while x_pr_array[-1] < L_b:
+        mr_lg_array.append(0)
+        if x_pis_array[-1] > L0_pt:
+            print('Piston has exceeded pump tube prior to projectile exit')
         if P_pt_array[-1] < P_rupt and diskBroken == False:     # Check if pressure has exceeded rupture pressure
             # Disk unbroken, just the pump tube
             if Z_c_array[-1] < 1:
@@ -356,7 +363,10 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, A_pis=A_pis,
         if i * delta_t > .01:                 # If projectile hasnt left the barrel after .5 seconds then something is wrong
             n_disk_rupture = 0
             t_disk_rupture = 0
+            print('Projectile failed to leave the barrel. Rupture disk pressure was probably not exceeded.')
             break
+    t_pr_exit = t_array[-1]
+    n_pr_exit = n_array[-1]
 
     print('Projectile Exit Velocity = ', round(v_pr_array[-1], 3), 'mps')
     print('Exit at t = {} (n = {})'.format(t_array[-1], n_array[-1]))
