@@ -1,15 +1,4 @@
 # -*- coding: utf-8 -*-
-import numpy as np
-import math
-import csv
-from matplotlib import pyplot as plt
-"""
-Created on Tue Feb 15 12:29:57 2022
-
-@author: alfie
-"""
-
-# -*- coding: utf-8 -*-
 """
 Created on Fri Dec  3 11:44:15 2021
 
@@ -33,10 +22,17 @@ x = done
 
 @author: Group 47
 """
+import numpy as np
+import math
+import csv
+from matplotlib import pyplot as plt
 
 plt.rcParams['figure.figsize'] = [6, 4]
 plt.rcParams['figure.dpi'] = 250
 
+
+useRiadPb = 1  # 0 is no base pressure effect| 1 is Riad | 2 is summerfield
+useRiadPrb = 3  # 0 is no base pressure effect| 1 is Riad | 2 is summerfield | 3 is Carlucci
 
 # COMBUSTION CHAMBER VALUES
 D_c = 30e-3                     # Diameter of the Combustion Chamber
@@ -67,6 +63,7 @@ P0_pt = 10e6       # Initial pressure in the pump tube (ahead of the piston)
 L0_pt = 1.3        # Length of the pump tube
 D_pt = 30e-3        # Diameter of the pump tube
 gamma_lg = 1.66     # Gamma for the light gas
+taperLength = 150e-3
 
 # RUPTURE DISK VALUES
 P_rupt = 35e+6  # Pressure at which the rupture disk ruptures
@@ -91,10 +88,11 @@ delta_t = 1e-7  # Time step length
 # Calculating areas from diameters
 A_c = np.pi * (D_c / 2)**2
 A_pt = np.pi * (D_pt / 2)**2
-V0_pt = A_pt * L0_pt
+V_pt_thrustrum = 1 / 3 * math.pi * taperLength * ((D_b / 2)**2 + D_b / 2 * D_pt / 2 + (D_pt / 2)**2)
+V0_pt = (L0_pt - taperLength) * A_pt + V_pt_thrustrum
 A_b = np.pi * (D_b / 2)**2
 A_pis = np.pi * (D_pis / 2)**2
-
+m0_lg = P0_pt * V0_pt / (2077.1 * (273.15 + 21))
 # Some global variables because im a bad programmer
 t_burnout = 0
 n_burnout = 0
@@ -130,7 +128,8 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, C=C, A_pis=A_pis,
         Zr_c_array, n_burnout, t_burnout, V_c_array, V_pt_array, S,\
         a_pis_array, a_pr_array, T_lg_array, T_lg2_array, t2_array, P_c2_array,\
         P_pt2_array, x_pis2_array, m_lg_array, v_pis2_array, mr_lg_array, t_pr_exit, \
-        n_pr_exit, T_c_array, T_c2_array, R_c_array, m_c_array, m_c_cProds_array, V_c2_array
+        n_pr_exit, T_c_array, T_c2_array, R_c_array, m_c_array, m_c_cProds_array,\
+        V_c2_array, P_pb_array, P_pb2_array, P_prb_array, P_prb2_array, P_prb3_array
 
     P_pt_array = [P0_pt]        # PUMP TUBE Pressure Ahead of Piston
     P_b_array = [P0_b]          # BARREL PRESSURE Behind the projectile
@@ -144,13 +143,18 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, C=C, A_pis=A_pis,
     V_pt_array = [V0_pt]        # PISTON/BARREL VOLUME behind projectile
     n_array = []                # Counts the time step number
     t_array = []                # Holds the time step value
-
+    P_pb_array = [0]
+    P_pb2_array = [0]
+    P_prb_array = [0]
+    P_prb2_array = [0]
+    P_prb3_array = [0]
     mr_lg_array = [0]
     # COMBUSTION CHAMBER
+
     P_c_array = [P0_pt]  # Combustion chamber pressure array, starts with pressure for now
     Zr_c_array = [0]
-    Z0_br = P0_pt * (V0_c - C / density_propel) / (C * (ForceConst_propel + P0_pt * (CoVolume_propel - 1 / density_propel)))
-    Z_c_array = [Z0_br]          # POWDER BURN Decimal - may need to start at z0
+    Z0 = P0_pt * (V0_c - C / density_propel) / (C * (ForceConst_propel + P0_pt * (CoVolume_propel - 1 / density_propel)))
+    Z_c_array = [Z0]          # POWDER BURN Decimal - may need to start at z0
 
     # Event BOOLEANS and Values
     global diskBroken, diskJustBroken, burnoutTF, n_burnout, t_burnout
@@ -176,13 +180,19 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, C=C, A_pis=A_pis,
 
         S = S + dx * P_pt_array[-1]                         # Work done on piston (energy removed from gas)
         # Combustion Pressure using energy balance between internal, work done and PV
-        m_prime = m_pis + C / 3
+        m_prime = m_pis + C / 4
         P_c = (ForceConst_propel * C * Z_cur - (gamma_c - 1) * (m_prime / 2 * v_pis_array[-1]**2 + A_c * S)) \
             / (V0_c + A_c * x_pis_array[-1] - C / density_propel - (CoVolume_propel - 1 / density_propel) * C * Z_cur)
 
         P_c_array.append(P_c)                               # Append the Combustion Pressure
         V_c = A_pis * (L0_c + x_pis_array[-1])              # Calculate the Volume of the Combustion Chamber for this time step
         V_c_array.append(V_c)
+
+        P_pb = (P_c_array[-1] + 1 / 3 * Z_cur * C / m_pis * P_pt_array[-1]) / (1 + 1 / 3 * C / m_pis)
+        P_pb2 = P_c_array[-1] * (1 + ((gamma_c - 1) / (2)) * v_pis_array[-1]**2 / ForceConst_propel)**(-gamma_c / (gamma_c - 1))
+
+        P_pb_array.append(P_pb)
+        P_pb2_array.append(P_pb2)
 
     def setBurnoutValues():
         """ One time function that sets the values for the combustion chamber
@@ -207,11 +217,22 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, C=C, A_pis=A_pis,
         P_c_new = P_c_old * (V_c_new / V_c_old)**(-gamma_c)
         P_c_array.append(P_c_new)
 
+        P_pb = (P_c_array[-1] + 1 / 3 * C / m_pis * P_pt_array[-1]) / (1 + 1 / 3 * C / m_pis)
+        P_pb2 = P_c_array[-1] * (1 + ((gamma_c - 1) / (2)) * v_pis_array[-1]**2 / ForceConst_propel)**(-gamma_c / (gamma_c - 1))
+
+        P_pb_array.append(P_pb)
+        P_pb2_array.append(P_pb2)
+
     def pistonElement():
         """ Handles a single time step element of the piston along the
         pump tube.
         """
-        delta_P = P_c_array[-1] - P_pt_array[-1]                                # Identify the Pressure Differential across Piston
+        if useRiadPb == 1:
+            delta_P = P_pb_array[-1] - P_pt_array[-1]                                # Identify the Pressure Differential across Piston
+        elif useRiadPb == 2:
+            delta_P = P_pb2_array[-1] - P_pt_array[-1]
+        else:
+            delta_P = P_c_array[-1] - P_pt_array[-1]
         F_pressure = delta_P * A_pis                                              # Identify the pressure force on piston
 
         # Check if we need to consider static or dynamic friction -------------
@@ -241,7 +262,9 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, C=C, A_pis=A_pis,
             v_pis_array.append(v_pis)
             x_pis_array.append(x_pis)
 
-        V_pt = (L0_pt - x_pis_array[-1]) * A_pis
+        V_pt_thrustrum = 1 / 3 * math.pi * taperLength * ((D_b / 2)**2 + D_b / 2 * D_pt / 2 + (D_pt / 2)**2)
+
+        V_pt = (L0_pt - x_pis_array[-1] - taperLength) * A_pis + V_pt_thrustrum
         V_pt_array.append(V_pt)
         P_pt = P_pt_array[-1] * np.power(V_pt_array[-2] / V_pt_array[-1], gamma_lg)
         P_pt_array.append(P_pt)
@@ -258,7 +281,12 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, C=C, A_pis=A_pis,
             the end of the time step due to the new pressure differential
         """
         # Piston Pressure differential and movement ---------------------------
-        delta_P_pis = P_c_array[-1] - P_pt_array[-1]                                # Identify the Pressure Differential across Piston
+        if useRiadPb == 1:
+            delta_P_pis = P_pb_array[-1] - P_pt_array[-1]                                # Identify the Pressure Differential across Piston
+        elif useRiadPb == 2:
+            delta_P_pis = P_pb2_array[-1] - P_pt_array[-1]
+        else:
+            delta_P_pis = P_c_array[-1] - P_pt_array[-1]
         F_pressure = delta_P_pis * A_pis                                              # Identify the pressure force on piston
 
         # Check if we need to consider static or dynamic friction -------------
@@ -289,7 +317,9 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, C=C, A_pis=A_pis,
             x_pis_array.append(x_pis)
 
         # Volume of barrel-pump-tube
-        V_pt = (L0_pt - x_pis_array[-1]) * A_pis
+        V_pt_thrustrum = 1 / 3 * math.pi * taperLength * ((D_b / 2)**2 + D_b / 2 * D_pt / 2 + (D_pt / 2)**2)
+
+        V_pt = (L0_pt - x_pis_array[-1] - taperLength) * A_pis + V_pt_thrustrum
         V_b = A_b * x_pr_array[-1]
         V_bpt = V_pt + V_b
         V_pt_array.append(V_bpt)
@@ -298,8 +328,23 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, C=C, A_pis=A_pis,
         P_bpt = P_pt_array[-1] * np.power(V_pt_array[-2] / V_pt_array[-1], gamma_lg)
         P_pt_array.append(P_bpt)
 
+        P_prb = (P_pt_array[-1] + 1 / 3 * m0_lg / m_pr * P_b_array[-1]) / (1 + 1 / 3 * m0_lg / m_pr)
+        P_prb2 = P_pt_array[-1] * (1 + ((gamma_lg - 1) / (2)) * v_pr_array[-1]**2 / ForceConst_propel)**(-gamma_lg / (gamma_lg - 1))
+        P_prb3 = P_pt_array[-1] / (1 + m0_lg / (3 * m_pr))
+
+        P_prb_array.append(P_prb)
+        P_prb2_array.append(P_prb2)
+        P_prb3_array.append(P_prb3)
         # Movement of Sabot/Projectile
-        delta_P_pr = P_pt_array[-1] - P_b_array[-1]
+        if useRiadPrb == 1:
+            delta_P_pr = P_prb_array[-1] - P_b_array[-1]                                # Identify the Pressure Differential across Piston
+        elif useRiadPrb == 2:
+            delta_P_pr = P_prb2_array[-1] - P_b_array[-1]
+        elif useRiadPrb == 3:
+            delta_P_pr = P_prb3_array[-1] - P_b_array[-1]
+        elif useRiadPrb == 0:
+            delta_P_pr = P_pt_array[-1] - P_b_array[-1]
+
         F_pressure = delta_P_pr * A_b
         F_fric = mu_sb
         F_res = F_pressure - F_fric
@@ -331,6 +376,9 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, C=C, A_pis=A_pis,
             x_pr_array.append(0)
             v_pr_array.append(0)
             a_pr_array.append(0)
+            P_prb_array.append(P_pt_array[-1])
+            P_prb2_array.append(P_pt_array[-1])
+            P_prb3_array.append(P_pt_array[-1])
 
         elif diskJustBroken == True:                            # Disk has just been broken
             # Disk broken - pump tube and sabot dynamics
@@ -378,6 +426,23 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, C=C, A_pis=A_pis,
         print('Burnout did not occur, projectile exited when burn ratio was {}'.format(round(Z_c_array[-1], 4)))
     else:
         print('Burnout after: {}s (n = {})'.format(t_burnout, n_burnout))
+
+    if useRiadPb == 1:
+        print('---Used Riad Piston Base Pressure---')
+    elif useRiadPb == 2:
+        print('---Used Summerfield Piston Base Pressure---')
+    else:
+        print('---Used Average for Piston Base Pressure---')
+
+    if useRiadPrb == 1:
+        print('---Used Riad Proj. Base Pressure---')
+    elif useRiadPrb == 2:
+        print('---Used Summerfield Proj. Base Pressure---')
+    elif useRiadPrb == 3:
+        print('---Used Carlucci Proj. Base Pressure---')
+    elif useRiadPrb == 0:
+        print('---Used Average for Proj. Base Pressure---')
+
     return n_array, t_array, x_pis_array, x_pr_array, n_disk_rupture, P_c_array
 
 
@@ -450,8 +515,21 @@ ax_PT.set_ylabel('Pressure (MPa)')   # Set y label
 # Plot Pressures with time
 P_c_MPa = [P / 1e6 for P in P_c_array]
 P_pt_MPa = [P / 1e6 for P in P_pt_array]
+P_pb_MPa = [P / 1e6 for P in P_pb_array]
+P_pb2_MPa = [P / 1e6 for P in P_pb2_array]
+P_prb_MPa = [P / 1e6 for P in P_prb_array]
+P_prb2_MPa = [P / 1e6 for P in P_prb2_array]
+P_prb3_MPa = [P / 1e6 for P in P_prb3_array]
+
 ax_PT.plot(t_array, P_c_MPa, label='Combustion')
 ax_PT.plot(t_array, P_pt_MPa, label='Pump Tube')
+
+ax_PT.plot(t_array, P_pb_MPa, label='Pis. Base P.-Carlucci', color='b', linestyle='--', alpha=0.5)
+ax_PT.plot(t_array, P_pb2_MPa, label='Pis. Base P.-Smrfld', color='b', linestyle='-.', alpha=0.5)
+
+# ax_PT.plot(t_array, P_prb_MPa, label='Pr. Base P.-Riad', color='orange', linestyle='--', alpha=0.5)
+ax_PT.plot(t_array, P_prb2_MPa, label='Pr. Base P.-Smrfld', color='orange', linestyle='-.', alpha=0.5)
+ax_PT.plot(t_array, P_prb3_MPa, label='Pr. Base P.-Carlucci', color='orange', linestyle='dotted', alpha=0.5)
 ax_PT.grid()                        # Apply a grid to plot area
 ax_PT.axhline(y=P_rupt / 1e6, color='k', linestyle='--', label='Rupture Disk Pressure')
 ax_PT.axvline(t_disk_rupture, color='grey', linestyle='--', label='Disk Rupture')
@@ -474,6 +552,7 @@ ax_VT.plot(t_array, V_pt_array, label='Pump Tube')
 ax_VT.grid()                        # Apply a grid to plot area
 ax_VT.axvline(t_disk_rupture, color='grey', linestyle='--', label='Disk Rupture')
 ax_VT.axvline(t_burnout, color='red', linestyle='--', label='Burnout')
+ax_VT.axhline(V_pt_thrustrum, color='green', linestyle='--', label='Taper Volume')
 ax_VT.legend()                      # Enable Legends
 # -----------------------------------------------------------------------------
 
@@ -492,6 +571,7 @@ ax_DT.grid()                        # Apply a grid to plot area
 ax_DT.axvline(t_disk_rupture, color='grey', linestyle='--', label='Disk Rupture')
 ax_DT.axvline(t_burnout, color='red', linestyle='--', label='Burnout')
 ax_DT.axhline(L0_pt, color='blue', linestyle='--', label='Pump Tube Length')
+ax_DT.axhline(L0_pt - taperLength, color='lightblue', linestyle='--', label='Taper Reached')
 ax_DT.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
              fancybox=True, shadow=True, ncol=3)    # Enable Legends
 # -----------------------------------------------------------------------------
@@ -531,7 +611,10 @@ ax_aT.legend()                      # Enable Legends
 # -----------------------------------------------------------------------------
 """
 
-# with open('PR{}g-BORE{}mm-C{}g.csv'.format(m_pr * 1000, D_b * 1000, C * 1000), 'w', newline='') as myfile:
-#    wr = csv.writer(myfile)
-#    for t, P_c, P_pt, v_pis, v_pr in zip(t_array, P_c_array, P_pt_array, v_pis_array, v_pr_array):
-#        wr.writerow([t, P_c, P_pt, v_pis, v_pr])
+with open('PR{}g-BORE{}mm-C{}g.csv'.format(m_pr * 1000, D_b * 1000, C * 1000), 'w', newline='') as myfile:
+    wr = csv.writer(myfile)
+    for t, P_c, P_pt, v_pis, v_pr in zip(t_array, P_c_array, P_pt_array, v_pis_array, v_pr_array):
+        wr.writerow([t, P_c, P_pt, v_pis, v_pr])
+        wr.writerow([t, P_c, P_pt, v_pis, v_pr])
+        wr.writerow([t, P_c, P_pt, v_pis, v_pr])
+        wr.writerow([t, P_c, P_pt, v_pis, v_pr])

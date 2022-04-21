@@ -13,7 +13,7 @@ plt.rcParams['figure.figsize'] = [6, 4]
 plt.rcParams['figure.dpi'] = 250
 
 M1Path = 'PR17.0g-BORE12.7mm-C8.0g.csv'
-E1Path = 'Experimental 8g17g12.7mm.csv'
+E1Path = 'Model + Exp. Data CSVs/Experimental 8g17g12.7mm.csv'
 
 
 def ReadIn(path, n=1, m=1e6):
