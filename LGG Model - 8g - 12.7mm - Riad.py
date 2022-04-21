@@ -87,6 +87,7 @@ delta_t = 1e-7  # Time step length
 
 # Calculating areas from diameters
 A_c = np.pi * (D_c / 2)**2
+V0_c = A_c * L0_c
 A_pt = np.pi * (D_pt / 2)**2
 V_pt_thrustrum = 1 / 3 * math.pi * taperLength * ((D_b / 2)**2 + D_b / 2 * D_pt / 2 + (D_pt / 2)**2)
 V0_pt = (L0_pt - taperLength) * A_pt + V_pt_thrustrum
@@ -185,7 +186,7 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, C=C, A_pis=A_pis,
             / (V0_c + A_c * x_pis_array[-1] - C / density_propel - (CoVolume_propel - 1 / density_propel) * C * Z_cur)
 
         P_c_array.append(P_c)                               # Append the Combustion Pressure
-        V_c = A_pis * (L0_c + x_pis_array[-1])              # Calculate the Volume of the Combustion Chamber for this time step
+        V_c = A_pis * x_pis_array[-1] + V0_c             # Calculate the Volume of the Combustion Chamber for this time step
         V_c_array.append(V_c)
 
         P_pb = (P_c_array[-1] + 1 / 3 * Z_cur * C / m_pis * P_pt_array[-1]) / (1 + 1 / 3 * C / m_pis)
@@ -210,7 +211,7 @@ def DoIt(A_c=A_c, L0_c=L0_c, P0_c=P0_c, gamma_c=gamma_c, C=C, A_pis=A_pis,
         Z_c_array.append(1)
         Zr_c_array.append(0)
         V_c_old = V_c_array[-1]
-        V_c_new = A_pis * (L0_c + x_pis_array[-1])  # Calculate the Volume of the Combustion Chamber for this time step
+        V_c_new = A_pis * x_pis_array[-1] + V0_c  # Calculate the Volume of the Combustion Chamber for this time step
         V_c_array.append(V_c_new)
 
         P_c_old = P_c_array[-1]
