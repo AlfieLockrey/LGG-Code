@@ -36,7 +36,7 @@ useRiadPrb = 0  # 0 is no base pressure effect| 1 is Riad | 2 is summerfield | 3
 
 # COMBUSTION CHAMBER VALUES
 D_c = 250e-3                     # Diameter of the Combustion Chamber
-L0_c = 3000e-3                    # Length of the Combustion Chamber
+L0_c = 2000e-3                   # Length of the Combustion Chamber
 P0_c = 100e3                    # Initial pressure in the Combustion Chamber (before detonation)
 C = 2.98                       # Charge Mass 5 to 20 g
 

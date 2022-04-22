@@ -12,7 +12,7 @@ from scipy.stats import linregress
 plt.rcParams['figure.figsize'] = [6, 4]
 plt.rcParams['figure.dpi'] = 250
 
-M1Path = 'PR17.0g-BORE12.7mm-C8.0g.csv'
+M1Path = 'Model + Exp. Data CSVs/PR17.0g-BORE12.7mm-C8.0g.csv'
 E1Path = 'Model + Exp. Data CSVs/Experimental 8g17g12.7mm.csv'
 
 
@@ -112,11 +112,14 @@ def Compare(modelPath, expPath, dx_e=0, dy_e=0):
     meanvalue = meanvalue_sum / (2 * len(exp_y_unaltered_trimmed))
     print('Mean Squared Difference = ', meansquared)
     print('Mean value = ', meanvalue)
+    print(max(exp_y_trimmed))
+    print(max(mod_y_aligned))
+    print(-max(exp_y_trimmed) + max(mod_y_aligned))
 
 
 def Plot(xs, ys, labels, linestyles, colors, title='', xtitle='', ytitle='', n_col=4, scatter=False):
     fig, ax = plt.subplots()
-    fig.suptitle(title)
+    # fig.suptitle(title)
     ax.set_xlabel(xtitle)
     ax.set_ylabel(ytitle)
 
@@ -126,8 +129,9 @@ def Plot(xs, ys, labels, linestyles, colors, title='', xtitle='', ytitle='', n_c
         else:
             ax.plot(xs[n], ys[n], label=labels[n], linestyle=linestyles[n], color=colors[n])
     ax.grid()
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), fancybox=True,
-              shadow=True, ncol=n_col)
+    # ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), fancybox=True,
+    # shadow=True, ncol=n_col)
+    ax.legend()
 
 
 def DeltaTPeak(modelPath, expPath):
