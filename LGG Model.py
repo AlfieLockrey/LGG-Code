@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 import math
 from copy import deepcopy
 
-plt.rcParams['figure.figsize'] = [6, 4]
+plt.rcParams['figure.figsize'] = [6 / 1.2, 4 / 1.2]
 plt.rcParams['figure.dpi'] = 250
 
 useRiadPb = 2  # 0 is no base pressure effect| 1 is Riad | 2 is summerfield
@@ -53,7 +53,7 @@ taperLength = 150e-3
 ForceConstantLG = 1.602e6
 
 # RUPTURE DISK VALUES
-P_rupt = 100e+6  # Pressure at which the rupture disk ruptures
+P_rupt = 50e+6  # Pressure at which the rupture disk ruptures
 
 # BARREL VALUES
 L_b = 5          # Length of the barrel
@@ -802,7 +802,7 @@ ax_D2T.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
 
 # ------------------------ Piston Velocity-Time Plots --------------------------------
 fig_v2T = plt.figure()               # Create Figure
-fig_v2T.suptitle('Piston Velocity vs Time')  # Set Figure Title
+# fig_v2T.suptitle('Piston Velocity vs Time')  # Set Figure Title
 ax_v2T = fig_v2T.add_subplot()        # Add axes to figure
 
 ax_v2T.set_xlabel('Time (s)')        # Set x label
@@ -814,8 +814,8 @@ ax_v2T.grid()                        # Apply a grid to plot area
 ax_v2T.axvline(t_disk_rupture, color='grey', linestyle='--', label='Disk Rupture')
 ax_v2T.axvline(t_burnout, color='red', linestyle='--', label='Burnout')
 ax_v2T.axvline(t_pr_exit, color='green', linestyle='--', label='Projectile Exit')
-ax_v2T.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
-              fancybox=True, shadow=True, ncol=3)    # Enable Legends
+ax_v2T.legend(loc='upper left', bbox_to_anchor=(.83, .4),
+              fancybox=True, shadow=True, ncol=1)    # Enable Legends
 # -----------------------------------------------------------------------------
 
 # ------------------------  Barrel Mass Flow Rate-Time Plots ------------------

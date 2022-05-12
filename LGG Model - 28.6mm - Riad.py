@@ -30,15 +30,20 @@ from matplotlib import pyplot as plt
 plt.rcParams['figure.figsize'] = [6, 4]
 plt.rcParams['figure.dpi'] = 250
 
+m_pr = 26.1e-3    # Projectile mass
+C = 2.98                       # Charge Mass 5 to 20 g
+P0_pt = 1.17e6       # Initial pressure in the pump tube (ahead of the piston)
+m_pis = 6.8       # Mass of the piston
+gamma_lg = 1.4     # Gamma for the light gas
 
-useRiadPb = 1  # 0 is no base pressure effect| 1 is Riad | 2 is summerfield
-useRiadPrb = 0  # 0 is no base pressure effect| 1 is Riad | 2 is summerfield | 3 is Carlucci
+useRiadPb = 2  # 0 is no base pressure effect| 1 is Riad | 2 is summerfield
+useRiadPrb = 3  # 0 is no base pressure effect| 1 is Riad | 2 is summerfield | 3 is Carlucci
 
 # COMBUSTION CHAMBER VALUES
 D_c = 250e-3                     # Diameter of the Combustion Chamber
 L0_c = 2000e-3                   # Length of the Combustion Chamber
 P0_c = 100e3                    # Initial pressure in the Combustion Chamber (before detonation)
-C = 2.98                       # Charge Mass 5 to 20 g
+
 
 gamma_c = 1.2543                # γ Gamma for the combustion products
 
@@ -53,16 +58,16 @@ V0_c = L0_c * math.pi * (D_c / 2)**2
 
 # PISTON VALUES
 D_pis = 90e-3            # Diameter of piston
-m_pis = 6.81          # Mass of the piston
+
 mu_static_pis = 0       # Coefficient of friction for the piston against the pump tube
 mu_dynamic_pis = 0
 allowPistonRearward = False
 
 # PUMP TUBE VALUES
-P0_pt = .76e6       # Initial pressure in the pump tube (ahead of the piston)
+
 L0_pt = 9.02        # Length of the pump tube
 D_pt = D_pis       # Diameter of the pump tube
-gamma_lg = 1.4     # Gamma for the light gas
+
 taperLength = 0
 
 # RUPTURE DISK VALUES
@@ -78,7 +83,7 @@ gamma_ic = 1.4      # Gamma for the (near vaccum) gas in the impact chamber
 V_ic = 1
 
 # PROJECTILE & SABOT VALUES
-m_pr = 26.1e-3    # Projectile mass
+
 m_sb = 0        # Sabot Mass0.47e-3
 mu_sb = 0     # Sabot Friction coeff.
 
